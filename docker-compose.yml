@@ -1,0 +1,189 @@
+# =============================================================================
+# docker-compose.yml — Order Management System (OMS)
+# =============================================================================
+# Stack: PostgreSQL 16 · Redis 7 · Apache Kafka (con Zookeeper)
+#
+# Uso:
+#   docker-compose up -d            -> Levantar todos los servicios en background
+#   docker-compose ps               -> Ver estado y health-checks
+#   docker-compose logs -f kafka    -> Seguir logs de un servicio específico
+#   docker-compose down -v          -> Destruir contenedores Y volúmenes
+# =============================================================================
+
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# Redes: usamos una red bridge dedicada para aislar el stack del OMS.
+# Todos los servicios se comunican por nombre de servicio (DNS interno Docker).
+# ---------------------------------------------------------------------------
+networks:
+  oms-network:
+    driver: bridge
+
+# ---------------------------------------------------------------------------
+# Volúmenes persistentes: los datos de Postgres y Redis sobreviven reinicios.
+# Sin esto, cada 'docker-compose down' borraría toda la base de datos.
+# ---------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:
+
+
+services:
+
+  # =========================================================================
+  # PostgreSQL 16 — Base de datos relacional principal
+  # =========================================================================
+  # Por qué Postgres y no MySQL: soporte nativo de JSONB, UUID, window functions
+  # y arrays. Mejor rendimiento en cargas transaccionales complejas.
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: oms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oms_db}
+      POSTGRES_USER: ${POSTGRES_USER:-oms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oms_password}
+      # Optimización: precalentamiento de la caché de Postgres al arrancar
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialización opcional (DDL base si no usamos Flyway)
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - oms-network
+    healthcheck:
+      # pg_isready verifica que Postgres acepta conexiones, más fiable que
+      # simplemente comprobar que el puerto está abierto
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oms_user} -d ${POSTGRES_DB:-oms_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # =========================================================================
+  # Redis 7 — Caché de alta velocidad y gestión de sesiones
+  # =========================================================================
+  # Por qué Redis: estructuras de datos en memoria (strings, hashes, sorted sets),
+  # latencia sub-milisegundo. Ideal para el patrón Cache-Aside que usaremos en
+  # GetOrderService: consultar caché primero, fallback a Postgres si no hay hit.
+  # =========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: oms-redis
+    restart: unless-stopped
+    command: >
+      redis-server --requirepass ${REDIS_PASSWORD:-oms_redis_pass} --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - oms-network
+    healthcheck:
+      # AUTH es necesario porque configuramos contraseña
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-oms_redis_pass}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # =========================================================================
+  # Zookeeper — Coordinación del clúster Kafka
+  # =========================================================================
+  # Nota: Kafka moderno (KRaft mode) puede funcionar sin Zookeeper, pero
+  # Confluent Platform aún lo usa por madurez y facilidad de configuración local.
+  # =========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: oms-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      # HeapOpts reducido para entornos locales (default es 512m)
+      KAFKA_HEAP_OPTS: "-Xmx256m -Xms128m"
+      # La imagen Confluent requiere esta JVM property para habilitar comandos 4LW como 'ruok'
+      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=ruok,stat,srvr"
+    ports:
+      - "${ZOOKEEPER_PORT:-2181}:2181"
+    networks:
+      - oms-network
+    healthcheck:
+      test: [ "CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # =========================================================================
+  # Apache Kafka — Message broker para comunicación event-driven
+  # =========================================================================
+  # Por qué Kafka vs RabbitMQ:
+  #  · Kafka: log distribuido, retención configurable, replay de eventos,
+  #    throughput masivo (millones msg/s), ideal para Event Sourcing / CQRS.
+  #  · RabbitMQ: mejor para routing complejo (exchanges/bindings) y cuando
+  #    el consumo debe borrar el mensaje.
+  # Para un OMS donde los eventos son fuente de verdad, Kafka es la elección.
+  # =========================================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: oms-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # PLAINTEXT_HOST: expuesto al host (localhost:9092 para la app Spring Boot)
+      # PLAINTEXT: comunicación interna entre contenedores Docker
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # Auto-creación de topics habilitada para desarrollo (en producción: DISABLE)
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168 # 7 días de retención de mensajes
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824 # 1GB por segmento de log
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+      KAFKA_NUM_PARTITIONS: 3 # Paralelismo inicial para el topic
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    networks:
+      - oms-network
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 45s
+
+  # =========================================================================
+  # Kafka UI — Interfaz web para inspeccionar topics/mensajes (opcional)
+  # =========================================================================
+  # Herramienta pedagógica: permite visualizar los eventos OrderCreated
+  # en tiempo real sin usar kafka-console-consumer desde la terminal.
+  # Acceso: http://localhost:8090
+  # =========================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: oms-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: oms-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8090:8080"
+    networks:
+      - oms-network

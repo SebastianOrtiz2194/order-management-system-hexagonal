@@ -1,0 +1,72 @@
+server:
+  port: ${APP_PORT:8080}
+
+spring:
+  application:
+    name: order-management-system
+  
+  # ==============================================================
+  # PERSISTENCIA: PostgreSQL
+  # ==============================================================
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:oms_db}
+    username: ${POSTGRES_USER:oms_user}
+    password: ${POSTGRES_PASSWORD:oms_password}
+    driver-class-name: org.postgresql.Driver
+    # HikariCP es el connection pool por defecto, optimizado para alto throughput
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  
+  jpa:
+    # Mostramos el SQL en desarrollo
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # 'update' permite auto-crear tablas (ideal solo MVP/Desarrollo)
+        # En prod: 'validate' y usamos Flyway/Liquibase
+        hbm2ddl.auto: update 
+  
+  # ==============================================================
+  # CACHÉ: Redis
+  # ==============================================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:oms_redis_pass}
+      timeout: 2000 # Timeout de conexión en ms
+  
+  # ==============================================================
+  # MENSAJERÍA ASÍNCRONA: Kafka
+  # ==============================================================
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+    producer:
+      # Estrategia de serialización: la Key es un String (Order ID), 
+      # el Value será un JSON (el propio evento OrderCreated)
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true # Ayuda al consumidor a saber qué clase parsear
+    consumer:
+      # Grupo de consumidores. Múltiples instancias compartiendo grupo = balanceo de carga
+      group-id: oms-consumer-group
+      auto-offset-reset: earliest # Si no hay offset previo, arrancar desde el principio del topic
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.oms.domain.event" # Seguridad: solo de-serializar esta clase
+
+# ==============================================================
+# OBSERVABILIDAD: Actuator endpoints
+# ==============================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always # Expone si BD/Redis/Kafka están conectados

@@ -1,0 +1,41 @@
+# ---- Compiled output ----
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# ---- Maven wrapper ----
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- Environment / Secrets ----
+# NUNCA commitear el .env real (contiene contraseñas).
+# Usa .env.example como plantilla pública.
+.env
+
+# ---- IDE ----
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- Docker volumes (si se crean localmente) ----
+data/
+
+# ---- Agent Teams Lite ----
+.atl/
+
+# ---- Implementation Plan ----
+implementation_plan.md.resolved
