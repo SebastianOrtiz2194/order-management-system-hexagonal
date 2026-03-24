@@ -23,13 +23,8 @@ public class PostgresOrderAdapter implements OrderRepositoryPort {
 
     @Override
     public Order save(Order order) {
-        // 1. Traducir puro negocio -> capa base de datos.
+        // 1. Traducir puro negocio -> capa base de datos (con links automáticos).
         OrderJpaEntity entity = mapper.toJpaEntity(order);
-        
-        // Link parent reference for JPA bi-directional relationship
-        if (entity.getItems() != null) {
-            entity.getItems().forEach(item -> item.setOrder(entity));
-        }
         
         // 2. Transacción de la Base Relacional a través de Spring y Hibernate.
         OrderJpaEntity savedEntity = jpaRepository.save(entity);
