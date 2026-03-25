@@ -15,21 +15,20 @@ import java.util.List;
 public interface OrderPersistenceMapper {
 
     // ==== De DOMINIO a JPA ====
-    // Ignoramos createdAt si lo va a crear @PrePersist.
-    @Mapping(target = "createdAt", ignore = true)
-    OrderJpaEntity toJpaEntity(Order order);
-
-    @Mapping(target = "id", ignore = true) // El VO no tiene ID, JPA se encarga de autogenerarlo.
-    @Mapping(target = "order", ignore = true) // Ciclamos después para re-vincular
-    OrderItemJpaEntity toJpaItem(OrderItem item);
-
-    // Método hook para forzar que los ítem anémicos apunten al padre (necesario por hibernate)
-    @AfterMapping
-    default void linkOrderItems(@MappingTarget OrderJpaEntity orderJpaEntity) {
-        if (orderJpaEntity.getItems() != null) {
-            orderJpaEntity.getItems().forEach(item -> item.setOrder(orderJpaEntity));
+    default OrderJpaEntity toJpaEntity(Order order) {
+        OrderJpaEntity entity = toJpaEntityInternal(order);
+        if (entity != null && entity.getItems() != null) {
+            entity.getItems().forEach(item -> item.setOrder(entity));
         }
+        return entity;
     }
+
+    @Mapping(target = "createdAt", ignore = true)
+    OrderJpaEntity toJpaEntityInternal(Order order);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "order", ignore = true)
+    OrderItemJpaEntity toJpaItem(OrderItem item);
 
     // ==== De JPA a DOMINIO ====
     @Mapping(source = "status", target = "status", qualifiedByName = "mapStatus")
@@ -37,7 +36,6 @@ public interface OrderPersistenceMapper {
 
     OrderItem toDomainItem(OrderItemJpaEntity jpaItem);
 
-    // Parseo de enum
     @Named("mapStatus")
     default OrderStatus mapStatus(String status) {
         return status != null ? OrderStatus.valueOf(status) : OrderStatus.PENDING;
