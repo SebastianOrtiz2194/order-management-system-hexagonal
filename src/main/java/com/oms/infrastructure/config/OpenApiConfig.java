@@ -16,7 +16,7 @@ public class OpenApiConfig {
                 .info(new Info().title("Order Management System (OMS) API")
                         .description("API for OMS built with Hexagonal Architecture and Spring Boot 3")
                         .version("v1.0.0")
-                        .contact(new Contact().name("Development Team").email("dev@oms.com"))
+                        .contact(new Contact().name("Development Team").email("seb@oms.com"))
                         .license(new License().name("Apache 2.0").url("http://springdoc.org")));
     }
 }
