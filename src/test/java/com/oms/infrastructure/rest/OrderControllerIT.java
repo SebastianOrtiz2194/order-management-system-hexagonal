@@ -16,6 +16,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -40,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@WithMockUser(username = "admin", roles = {"ADMIN"})
 class OrderControllerIT {
 
     @Container
@@ -229,5 +232,31 @@ class OrderControllerIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ─── SECURITY VERIFICATION ───────────────────────────────────────────────────
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("ANY /orders - 401 Unauthorized when no user is provided")
+    void anyEndpoint_withoutAuthentication_returns401() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("Swagger - 200 OK without authentication")
+    void swaggerEndpoints_withoutAuthentication_arePublic() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk());
+        
+        mockMvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().isFound()); // Redirect to swagger-ui/index.html
     }
 }

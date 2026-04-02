@@ -40,6 +40,17 @@ mvn spring-boot:run
 
 ---
 
+---
+
+## 🔐 Seguridad (Fase 5)
+El API está protegida con **Basic Authentication**.
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
+
+Para probar con curl, añade la bandera `-u admin:admin123`.
+
+---
+
 ## 📡 API Endpoints
 
 ### 1. Crear un Pedido
