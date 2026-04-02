@@ -42,7 +42,7 @@ mvn spring-boot:run
 
 ---
 
-## 🔐 Seguridad (Fase 3)
+## 🔐 Seguridad (Fase 5)
 El API está protegida con **Basic Authentication**.
 - **Usuario:** `admin`
 - **Contraseña:** `admin123`
