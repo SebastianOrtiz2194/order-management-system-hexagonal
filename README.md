@@ -79,9 +79,11 @@ curl -X PATCH http://localhost:8080/api/v1/orders/{UUID}/status \
 
 ---
 
-## 🔍 Observabilidad
-El sistema utiliza Spring Boot Actuator para exponer métricas de salud vitales:
-- **Healthcheck & Status**: `http://localhost:8080/actuator/health`
-- **Métricas Internas**: `http://localhost:8080/actuator/metrics`
+## 🔍 Observabilidad y Trazabilidad (Fase 4)
+El sistema implementa **Distributed Tracing** con **Micrometer Tracing** y **OpenTelemetry** para rastrear peticiones entre el API y Kafka.
 
-*(Además, si el contenedor lo permite, puedes utilizar la UI visual para Kafka en `http://localhost:8090`)*
+- **Zipkin UI:** Visualiza trazas de peticiones en `http://localhost:9411`
+- **Logs:** Los logs incluyen `traceId` y `spanId` entre corchetes (ej: `[oms, 5f1..., a2b...]`).
+- **Healthcheck & Status:** `http://localhost:8080/actuator/health`
+- **Métricas Internas:** `http://localhost:8080/actuator/metrics`
+- **Kafka UI:** `http://localhost:8090`

@@ -187,3 +187,24 @@ services:
       - "8090:8080"
     networks:
       - oms-network
+
+  # =========================================================================
+  # Zipkin — Distributed Tracing UI
+  # =========================================================================
+  # Permite inspeccionar latencias y cuellos de botella visualmente,
+  # viendo cómo viaja la petición por todo el sistema.
+  # Acceso: http://localhost:9411
+  # =========================================================================
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: oms-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - oms-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9411"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -70,3 +70,21 @@ management:
   endpoint:
     health:
       show-details: always # Expone si BD/Redis/Kafka están conectados
+  
+  # ==============================================================
+  # TRACING: Micrometer + Zipkin
+  # ==============================================================
+  tracing:
+    sampling:
+      probability: 1.0 # Capturamos el 100% en desarrollo/formación
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URL:http://localhost:9411}/api/v2/spans
+
+# ==============================================================
+# LOGGING: Formato estructurado con Trace/Span ID
+# ==============================================================
+logging:
+  pattern:
+    # Formato estándar de Spring: Severity [App, TraceId, SpanId] Logger : Message
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
