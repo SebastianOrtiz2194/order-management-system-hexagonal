@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "f5e6a7d8-b9c0-4d1e-8f2a-3b4c5d6e7f8a",
+		"name": "Order Management System (OMS)",
+		"description": "Collection for testing the Hexagonal Architecture Order Management System (OMS) with Spring Boot, PostgreSQL, Redis, and Kafka.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"auth": {
+			"type": "basic",
+			"basic": [
+				{
+					"key": "password",
+					"value": "admin123",
+					"type": "string"
+				},
+				{
+					"key": "username",
+					"value": "admin",
+					"type": "string"
+				}
+			]
+		}
+	},
+	"item": [
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerName\": \"John Doe\",\n    \"items\": [\n        {\n            \"productId\": \"PROD-001\",\n            \"productName\": \"Mechanical Keyboard\",\n            \"quantity\": 1,\n            \"unitPrice\": 120.50\n        },\n        {\n            \"productId\": \"PROD-002\",\n            \"productName\": \"Gaming Mouse\",\n            \"quantity\": 2,\n            \"unitPrice\": 45.00\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders"
+							]
+						},
+						"description": "Validates and creates a new order in the system."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/{{order_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"{{order_id}}"
+							]
+						},
+						"description": "Retrieves an order by its UUID, fetching from Redis cache if available or PostgreSQL database."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders"
+							]
+						},
+						"description": "Retrieves all current orders in the system."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"SHIPPED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/{{order_id}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"{{order_id}}",
+								"status"
+							]
+						},
+						"description": "Updates an order's status. Valid statuses: PENDING, PAID, SHIPPED, DELIVERED, CANCELLED."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Monitoring",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check application and dependency health status."
+					},
+					"response": []
+				},
+				{
+					"name": "Metrics (Prometheus)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/prometheus",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"prometheus"
+							]
+						},
+						"description": "View application metrics in Prometheus format."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Example of capturing order_id from Create Order response",
+					"if (pm.response.code === 201) {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.id) {",
+					"        pm.collectionVariables.set(\"order_id\", jsonData.id);",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
