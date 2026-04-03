@@ -40,9 +40,7 @@ mvn spring-boot:run
 
 ---
 
----
-
-## 🔐 Seguridad (Fase 5)
+## 🔐 Seguridad
 El API está protegida con **Basic Authentication**.
 - **Usuario:** `admin`
 - **Contraseña:** `admin123`
@@ -90,7 +88,7 @@ curl -X PATCH http://localhost:8080/api/v1/orders/{UUID}/status \
 
 ---
 
-## 🔍 Observabilidad y Trazabilidad (Fase 4)
+## 🔍 Observabilidad y Trazabilidad
 El sistema implementa **Distributed Tracing** con **Micrometer Tracing** y **OpenTelemetry** para rastrear peticiones entre el API y Kafka.
 
 - **Zipkin UI:** Visualiza trazas de peticiones en `http://localhost:9411`
@@ -98,3 +96,13 @@ El sistema implementa **Distributed Tracing** con **Micrometer Tracing** y **Ope
 - **Healthcheck & Status:** `http://localhost:8080/actuator/health`
 - **Métricas Internas:** `http://localhost:8080/actuator/metrics`
 - **Kafka UI:** `http://localhost:8090`
+
+---
+
+## 🛠️ Herramientas de Pruebas
+### 📮 Postman Collection
+Se ha incluido una colección de Postman para facilitar las pruebas de los endpoints.
+- **Archivo:** `oms_postman_collection.json`
+- **Importación:** Importa el archivo en Postman.
+- **Variables:** La colección usa `{{baseUrl}}` (por defecto `http://localhost:8080`) y captura automáticamente el `{{order_id}}` al crear un pedido.
+- **Autenticación:** Ya incluye Basic Auth (`admin`/`admin123`).
