@@ -21,6 +21,7 @@ public interface OrderRestMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "totalAmount", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     Order toDomainCommand(OrderDTOs.CreateOrderRequest request);
 
     OrderItem toDomainItem(OrderDTOs.OrderItemRequest request);
