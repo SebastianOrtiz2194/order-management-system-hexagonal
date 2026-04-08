@@ -28,6 +28,7 @@ public class Order {
     private OrderStatus status;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     /**
      * Comportamiento del dominio: calcular el total de la orden basado en los ítems
@@ -56,6 +57,11 @@ public class Order {
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }
+        
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        this.updatedAt = LocalDateTime.now();
     }
 
     /**
@@ -64,12 +70,14 @@ public class Order {
      * del estado de la orden (máquina de estados).
      */
     public void updateStatus(OrderStatus newStatus) {
-        if (this.status == OrderStatus.CANCELLED) {
-            throw new InvalidOrderException("Cannot change status of a cancelled order");
+        if (newStatus == null) {
+            throw new InvalidOrderException("New status cannot be null");
         }
-        if (this.status == OrderStatus.DELIVERED && newStatus != OrderStatus.DELIVERED) {
-             throw new InvalidOrderException("Cannot change status as the order is already delivered");
+        if (!this.status.canTransitionTo(newStatus)) {
+            throw new InvalidOrderException(String.format("Invalid status transition from %s to %s", this.status, newStatus));
         }
+        
         this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
     }
 }
