@@ -4,6 +4,7 @@ import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.domain.model.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public class PostgresOrderAdapter implements OrderRepositoryPort {
     private final OrderPersistenceMapper mapper;
 
     @Override
+    @Transactional
     public Order save(Order order) {
         // 1. Traducir puro negocio -> capa base de datos (con links automáticos).
         OrderJpaEntity entity = mapper.toJpaEntity(order);

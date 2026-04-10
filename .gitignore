@@ -38,8 +38,8 @@ data/
 .atl/
 
 # ---- Implementation Plan ----
-implementation_plan.md.resolved
-
+implementation_plan.md
+implementation-plan-done.md.resolved
 # ---- Project Walkthroughs ----
 PROJECT_WALKTHROUGH.md
 project-walkthrough2.md
