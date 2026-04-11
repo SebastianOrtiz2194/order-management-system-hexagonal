@@ -1,5 +1,6 @@
 package com.oms.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -23,6 +24,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${oms.security.username}")
+    private String username;
+
+    @Value("${oms.security.password}")
+    private String password;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -50,8 +57,8 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         // En una aplicación real (o fase siguiente), esto leería de la base de datos
         UserDetails user = User.builder()
-            .username("admin")
-            .password(passwordEncoder.encode("admin123"))
+            .username(username)
+            .password(passwordEncoder.encode(password))
             .roles("ADMIN")
             .build();
 

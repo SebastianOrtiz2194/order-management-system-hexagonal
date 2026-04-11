@@ -10,9 +10,9 @@
   </parent>
   
   <groupId>com.oms</groupId>
-  <artifactId>order-management-system</artifactId>
+  <artifactId>order-management-system-hexagonal</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <name>order-management-system</name>
+  <name>order-management-system-hexagonal</name>
   <description>OMS using Hexagonal Architecture, Kafka, Redis, and Postgres</description>
 
   <properties>
@@ -214,6 +214,52 @@
         </configuration>
       </plugin>
       
+      <!-- JaCoCo for Code Coverage -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.11</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.70</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+              <includes>
+                <include>com/oms/domain/**</include>
+                <include>com/oms/application/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Spring Boot Build plugin -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
