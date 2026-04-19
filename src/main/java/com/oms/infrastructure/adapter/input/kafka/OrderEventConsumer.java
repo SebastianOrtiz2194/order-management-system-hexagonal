@@ -35,6 +35,16 @@ public class OrderEventConsumer {
                 .customerName(event.customerName())
                 .status(OrderStatus.valueOf(event.status()))
                 .totalAmount(event.totalAmount())
+                .createdAt(event.createdAt())
+                .updatedAt(event.updatedAt())
+                .items(event.items().stream()
+                        .map(item -> com.oms.domain.model.OrderItem.builder()
+                                .productId(item.productId())
+                                .productName(item.productName())
+                                .quantity(item.quantity())
+                                .unitPrice(item.unitPrice())
+                                .build())
+                        .toList())
                 .build();
         
         cachePort.save(reconstitutedOrder);

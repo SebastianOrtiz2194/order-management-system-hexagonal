@@ -3,22 +3,22 @@
 		"_postman_id": "f5e6a7d8-b9c0-4d1e-8f2a-3b4c5d6e7f8a",
 		"name": "Order Management System (OMS)",
 		"description": "Collection for testing the Hexagonal Architecture Order Management System (OMS) with Spring Boot, PostgreSQL, Redis, and Kafka.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"auth": {
-			"type": "basic",
-			"basic": [
-				{
-					"key": "password",
-					"value": "admin123",
-					"type": "string"
-				},
-				{
-					"key": "username",
-					"value": "admin",
-					"type": "string"
-				}
-			]
-		}
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "admin123",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "admin",
+				"type": "string"
+			}
+		]
 	},
 	"item": [
 		{
@@ -49,7 +49,7 @@
 								"orders"
 							]
 						},
-						"description": "Validates and creates a new order in the system."
+						"description": "Validates and creates a new order in the system. The response will now include `createdAt` and `updatedAt`. Creation triggers a Kafka event that automatically pre-warms the Redis cache."
 					},
 					"response": []
 				},
@@ -70,7 +70,7 @@
 								"{{order_id}}"
 							]
 						},
-						"description": "Retrieves an order by its UUID, fetching from Redis cache if available or PostgreSQL database."
+						"description": "Retrieves an order by its UUID, fetching from Redis cache if available or PostgreSQL database. Since creation pre-warms the cache, fetching immediately after creation should result in a Cache Hit. The response includes `createdAt` and `updatedAt`."
 					},
 					"response": []
 				},
@@ -121,7 +121,7 @@
 								"status"
 							]
 						},
-						"description": "Updates an order's status. Valid statuses: PENDING, PAID, SHIPPED, DELIVERED, CANCELLED."
+						"description": "Updates an order's status. Valid statuses: PENDING, PAID, SHIPPED, DELIVERED, CANCELLED. This will also update the `updatedAt` field."
 					},
 					"response": []
 				}

@@ -1,18 +1,23 @@
 package com.oms.domain.event;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Objeto de Dominio que modela el evento 'Orden Creada'.
- * <p>
- * En Java de 14+, usamos "records" porque son perfectos para datos inmutables y de valor, 
- * ideales para serializar de forma transparente sobre Kafka.
- */
 public record OrderCreatedEvent(
     UUID orderId,
     String customerName,
     BigDecimal totalAmount,
-    String status
+    String status,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    List<OrderItemEvent> items
 ) {
+    public record OrderItemEvent(
+        String productId,
+        String productName,
+        int quantity,
+        BigDecimal unitPrice
+    ) {}
 }
