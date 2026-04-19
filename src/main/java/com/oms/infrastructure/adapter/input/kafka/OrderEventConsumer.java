@@ -47,29 +47,42 @@ public class OrderEventConsumer {
      */
     @KafkaListener(topics = KafkaConfig.ORDER_EVENTS_TOPIC, groupId = "oms-consumer-group")
     public void consumeOrderCreated(@Payload OrderCreatedEvent event) {
+        if (event == null) {
+            log.warn("|| KAFKA CONSUMER || -> Received null event payload. Skipping.");
+            return;
+        }
+
+        if (event.orderId() == null || event.customerName() == null || event.status() == null) {
+            log.warn("|| KAFKA CONSUMER || -> Received event with missing required fields. Skipping.");
+            return;
+        }
+
         log.info("|| KAFKA CONSUMER || -> Event received processing Order ID: {}", event.orderId());
         
-        // Aquí demostramos un patrón Event-Driven (Warm up) reconstruyendo el modelo 
-        // a partir del evento, y persistiendo/precalentando la memoria (Cache).
-        // En un escenario real, llamaríamos a otro UseCase.
-        Order reconstitutedOrder = Order.builder()
-                .id(event.orderId())
-                .customerName(event.customerName())
-                .status(OrderStatus.valueOf(event.status()))
-                .totalAmount(event.totalAmount())
-                .createdAt(event.createdAt())
-                .updatedAt(event.updatedAt())
-                .items(event.items().stream()
-                        .map(item -> com.oms.domain.model.OrderItem.builder()
-                                .productId(item.productId())
-                                .productName(item.productName())
-                                .quantity(item.quantity())
-                                .unitPrice(item.unitPrice())
-                                .build())
-                        .toList())
-                .build();
-        
-        cachePort.save(reconstitutedOrder);
-        log.info("|| KAFKA CONSUMER || -> Target Cache was Pre-Warmed correctly.");
+        try {
+            // Aquí demostramos un patrón Event-Driven (Warm up) reconstruyendo el modelo 
+            // a partir del evento, y persistiendo/precalentando la memoria (Cache).
+            Order reconstitutedOrder = Order.builder()
+                    .id(event.orderId())
+                    .customerName(event.customerName())
+                    .status(OrderStatus.valueOf(event.status()))
+                    .totalAmount(event.totalAmount())
+                    .createdAt(event.createdAt())
+                    .updatedAt(event.updatedAt())
+                    .items(event.items() == null ? java.util.Collections.emptyList() : event.items().stream()
+                            .map(item -> com.oms.domain.model.OrderItem.builder()
+                                    .productId(item.productId())
+                                    .productName(item.productName())
+                                    .quantity(item.quantity())
+                                    .unitPrice(item.unitPrice())
+                                    .build())
+                            .toList())
+                    .build();
+            
+            cachePort.save(reconstitutedOrder);
+            log.info("|| KAFKA CONSUMER || -> Target Cache was Pre-Warmed correctly.");
+        } catch (IllegalArgumentException e) {
+            log.error("|| KAFKA CONSUMER || -> Invalid status received in event: {}. Skipping.", event.status());
+        }
     }
 }
