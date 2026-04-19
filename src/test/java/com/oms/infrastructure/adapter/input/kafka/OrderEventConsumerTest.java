@@ -53,7 +53,10 @@ class OrderEventConsumerTest {
                 UUID.fromString("11111111-1111-1111-1111-111111111111"),
                 "Alice Johnson",
                 new BigDecimal("300.00"),
-                "PENDING"
+                "PENDING",
+                java.time.LocalDateTime.now(),
+                java.time.LocalDateTime.now(),
+                java.util.Collections.emptyList()
         );
     }
 
@@ -72,7 +75,7 @@ class OrderEventConsumerTest {
             OrderCreatedEvent event = validEvent();
 
             // when
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // then
             ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
@@ -90,10 +93,17 @@ class OrderEventConsumerTest {
         void shouldProcessEventWithConfirmedStatus() {
             // given
             OrderCreatedEvent event = new OrderCreatedEvent(
-                    UUID.randomUUID(), "Bob Smith", new BigDecimal("150.00"), "CONFIRMED");
+                    UUID.randomUUID(), 
+                    "Bob Smith", 
+                    new BigDecimal("150.00"), 
+                    "CONFIRMED",
+                    java.time.LocalDateTime.now(),
+                    java.time.LocalDateTime.now(),
+                    java.util.Collections.emptyList()
+            );
 
             // when
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // then
             ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
@@ -114,7 +124,7 @@ class OrderEventConsumerTest {
         @DisplayName("Should skip processing when event payload is null")
         void shouldSkipWhenEventIsNull() {
             // when
-            consumer.consumeOrderCreated(null, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(null);
 
             // then — no interaction with cache, no exception thrown
             verify(cachePort, never()).save(any());
@@ -125,10 +135,17 @@ class OrderEventConsumerTest {
         void shouldSkipWhenOrderIdIsNull() {
             // given
             OrderCreatedEvent event = new OrderCreatedEvent(
-                    null, "Alice", new BigDecimal("100.00"), "PENDING");
+                    null, 
+                    "Alice", 
+                    new BigDecimal("100.00"), 
+                    "PENDING",
+                    java.time.LocalDateTime.now(),
+                    java.time.LocalDateTime.now(),
+                    java.util.Collections.emptyList()
+            );
 
             // when
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // then
             verify(cachePort, never()).save(any());
@@ -139,10 +156,17 @@ class OrderEventConsumerTest {
         void shouldSkipWhenCustomerNameIsNull() {
             // given
             OrderCreatedEvent event = new OrderCreatedEvent(
-                    UUID.randomUUID(), null, new BigDecimal("100.00"), "PENDING");
+                    UUID.randomUUID(), 
+                    null, 
+                    new BigDecimal("100.00"), 
+                    "PENDING",
+                    java.time.LocalDateTime.now(),
+                    java.time.LocalDateTime.now(),
+                    java.util.Collections.emptyList()
+            );
 
             // when
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // then
             verify(cachePort, never()).save(any());
@@ -153,10 +177,17 @@ class OrderEventConsumerTest {
         void shouldSkipWhenStatusIsNull() {
             // given
             OrderCreatedEvent event = new OrderCreatedEvent(
-                    UUID.randomUUID(), "Alice", new BigDecimal("100.00"), null);
+                    UUID.randomUUID(), 
+                    "Alice", 
+                    new BigDecimal("100.00"), 
+                    null,
+                    java.time.LocalDateTime.now(),
+                    java.time.LocalDateTime.now(),
+                    java.util.Collections.emptyList()
+            );
 
             // when
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // then
             verify(cachePort, never()).save(any());
@@ -167,10 +198,17 @@ class OrderEventConsumerTest {
         void shouldNotThrowOnInvalidStatus() {
             // given — "INVALID_STATUS" is not a valid OrderStatus enum value
             OrderCreatedEvent event = new OrderCreatedEvent(
-                    UUID.randomUUID(), "Alice", new BigDecimal("100.00"), "INVALID_STATUS");
+                    UUID.randomUUID(), 
+                    "Alice", 
+                    new BigDecimal("100.00"), 
+                    "INVALID_STATUS",
+                    java.time.LocalDateTime.now(),
+                    java.time.LocalDateTime.now(),
+                    java.util.Collections.emptyList()
+            );
 
             // when/then — should not throw (caught internally as non-retryable)
-            consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET);
+            consumer.consumeOrderCreated(event);
 
             // Cache should never be written on a failed parse
             verify(cachePort, never()).save(any());
@@ -195,7 +233,7 @@ class OrderEventConsumerTest {
 
             // when/then — the exception MUST propagate so DefaultErrorHandler can apply retry policy
             assertThatThrownBy(() ->
-                    consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET))
+                    consumer.consumeOrderCreated(event))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Redis connection timeout");
         }
@@ -210,7 +248,7 @@ class OrderEventConsumerTest {
 
             // when/then
             assertThatThrownBy(() ->
-                    consumer.consumeOrderCreated(event, TOPIC, PARTITION, OFFSET))
+                    consumer.consumeOrderCreated(event))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Serialization failure");
 
