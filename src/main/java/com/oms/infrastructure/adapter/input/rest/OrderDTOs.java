@@ -42,7 +42,8 @@ public class OrderDTOs {
             List<OrderItemResponse> items,
             String status,
             BigDecimal totalAmount,
-            String createdAt
+            String createdAt,
+            String updatedAt
     ) {}
 
     public record OrderItemResponse(

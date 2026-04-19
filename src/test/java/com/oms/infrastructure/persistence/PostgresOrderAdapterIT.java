@@ -47,6 +47,7 @@ class PostgresOrderAdapterIT {
      * en cada @Test, lo que mejora drásticamente el tiempo de ejecución.
      */
     @Container
+    @SuppressWarnings("resource")
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("oms_db_test")
             .withUsername("test_user")

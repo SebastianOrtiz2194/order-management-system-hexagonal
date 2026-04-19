@@ -23,7 +23,6 @@ public interface OrderPersistenceMapper {
         return entity;
     }
 
-    @Mapping(target = "createdAt", ignore = true)
     OrderJpaEntity toJpaEntityInternal(Order order);
 
     @Mapping(target = "id", ignore = true)

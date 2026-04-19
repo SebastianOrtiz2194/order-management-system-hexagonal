@@ -46,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class OrderControllerIT {
 
     @Container
+    @SuppressWarnings("resource")
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("oms_db_it")
             .withUsername("it_user")

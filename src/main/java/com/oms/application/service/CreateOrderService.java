@@ -31,12 +31,22 @@ public class CreateOrderService implements CreateOrderUseCase {
         // 2. Persistencia secundaria
         Order savedOrder = orderRepository.save(orderCommand);
         
-        // 3. Generación local del Evendo de Dominio Asíncrono
+        // 3. Generación local del Evento de Dominio Asíncrono
         OrderCreatedEvent event = new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getCustomerName(),
                 savedOrder.getTotalAmount(),
-                savedOrder.getStatus().name()
+                savedOrder.getStatus().name(),
+                savedOrder.getCreatedAt(),
+                savedOrder.getUpdatedAt(),
+                savedOrder.getItems().stream()
+                        .map(item -> new OrderCreatedEvent.OrderItemEvent(
+                                item.getProductId(),
+                                item.getProductName(),
+                                item.getQuantity(),
+                                item.getUnitPrice()
+                        ))
+                        .toList()
         );
         eventPublisher.publish(event);
         
