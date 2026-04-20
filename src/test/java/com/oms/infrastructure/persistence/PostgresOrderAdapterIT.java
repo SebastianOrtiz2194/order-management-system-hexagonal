@@ -157,18 +157,19 @@ class PostgresOrderAdapterIT {
     }
 
     @Test
-    @DisplayName("findAll() returns all persisted orders")
+    @DisplayName("findAll() returns all persisted orders paginated")
     void findAll_shouldReturnAllPersistedOrders() {
         // Given
         postgresOrderAdapter.save(buildSampleOrder());
         postgresOrderAdapter.save(buildSampleOrder());
 
         // When
-        List<Order> all = postgresOrderAdapter.findAll();
+        var result = postgresOrderAdapter.findAll(0, 20, null);
 
         // Then
-        // findAll() retorna al menos los dos que acabamos de persistir
-        assertThat(all).hasSizeGreaterThanOrEqualTo(2);
+        // findAll() retorna la pagina con al menos los dos que acabamos de persistir
+        assertThat(result.content()).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(result.totalElements()).isGreaterThanOrEqualTo(2);
     }
 
     @Test

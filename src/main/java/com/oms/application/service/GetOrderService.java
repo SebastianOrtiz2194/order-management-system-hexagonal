@@ -7,6 +7,7 @@ import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.domain.exception.OrderNotFoundException;
 import com.oms.domain.model.Order;
 import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -54,7 +55,7 @@ public class GetOrderService implements GetOrderUseCase, UpdateOrderStatusUseCas
     }
 
     @Override
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public PagedResult<Order> getAllOrders(int page, int size, OrderStatus status) {
+        return orderRepository.findAll(page, size, status);
     }
 }

@@ -168,7 +168,7 @@ services:
   # =========================================================================
   # Kafka UI — Interfaz web para inspeccionar topics/mensajes (opcional)
   # =========================================================================
-  # Herramienta pedagógica: permite visualizar los eventos OrderCreated
+  # Permite visualizar los eventos OrderCreated
   # en tiempo real sin usar kafka-console-consumer desde la terminal.
   # Acceso: http://localhost:8090
   # =========================================================================
@@ -204,7 +204,7 @@ services:
     networks:
       - oms-network
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9411"]
+      test: [ "CMD", "nc", "-z", "localhost", "9411" ]
       interval: 10s
       timeout: 5s
       retries: 5

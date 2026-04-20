@@ -23,12 +23,6 @@
 
   <dependencies>
     <!-- ============================================== -->
-    <!-- DEPENDENCIA DEL DOMINIO: NINGUNA             -->
-    <!-- En un proyecto multi-módulo ideal, el módulo -->
-    <!-- de Dominio no tendría ninguna de estas deps. -->
-    <!-- ============================================== -->
-
-    <!-- ============================================== -->
     <!-- WEB & REST ADAPTERS                          -->
     <!-- ============================================== -->
     <dependency>

@@ -1,7 +1,9 @@
 package com.oms.application.port.output;
 
 import com.oms.domain.model.Order;
-import java.util.List;
+import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,5 +15,5 @@ import java.util.UUID;
 public interface OrderRepositoryPort {
     Order save(Order order);
     Optional<Order> findById(UUID id);
-    List<Order> findAll();
+    PagedResult<Order> findAll(int page, int size, OrderStatus status);
 }

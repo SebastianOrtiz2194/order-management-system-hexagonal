@@ -5,6 +5,7 @@ import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.domain.exception.OrderNotFoundException;
 import com.oms.domain.model.Order;
 import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,14 +105,15 @@ class GetOrderServiceTest {
     void shouldReturnAllOrdersFromRepo() {
         // Arrange
         List<Order> orders = List.of(dummyOrder);
-        when(orderRepository.findAll()).thenReturn(orders);
+        PagedResult<Order> pagedResult = new PagedResult<>(orders, 0, 20, 1, 1);
+        when(orderRepository.findAll(0, 20, null)).thenReturn(pagedResult);
 
         // Act
-        List<Order> result = getOrderService.getAllOrders();
+        PagedResult<Order> result = getOrderService.getAllOrders(0, 20, null);
 
         // Assert
-        assertEquals(1, result.size());
-        assertEquals(dummyOrder, result.get(0));
-        verify(orderRepository, times(1)).findAll();
+        assertEquals(1, result.content().size());
+        assertEquals(dummyOrder, result.content().get(0));
+        verify(orderRepository, times(1)).findAll(0, 20, null);
     }
 }

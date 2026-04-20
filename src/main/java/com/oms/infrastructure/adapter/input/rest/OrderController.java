@@ -5,6 +5,7 @@ import com.oms.application.port.input.GetOrderUseCase;
 import com.oms.application.port.input.UpdateOrderStatusUseCase;
 import com.oms.domain.model.Order;
 import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -59,12 +60,26 @@ public class OrderController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Get all orders", description = "Retrieves all current orders in the system.")
+    @Operation(summary = "Get all orders", description = "Retrieves all current orders in the system with pagination and optional filtering.")
     @ApiResponse(responseCode = "200", description = "Orders returned successfully")
-    public List<OrderDTOs.OrderResponse> getAllOrders() {
-        return getOrderUseCase.getAllOrders().stream()
+    public OrderDTOs.PagedResponse<OrderDTOs.OrderResponse> getAllOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status) {
+        
+        OrderStatus statusFilter = status != null ? OrderStatus.valueOf(status.toUpperCase()) : null;
+        PagedResult<Order> pagedResult = getOrderUseCase.getAllOrders(page, size, statusFilter);
+        
+        List<OrderDTOs.OrderResponse> content = pagedResult.content().stream()
                 .map(mapper::toResponseDto)
                 .toList();
+
+        return new OrderDTOs.PagedResponse<>(
+                content,
+                pagedResult.page(),
+                pagedResult.totalPages(),
+                pagedResult.totalElements()
+        );
     }
 
     @PatchMapping("/{id}/status")
