@@ -52,4 +52,11 @@ public class OrderDTOs {
             int quantity,
             BigDecimal unitPrice
     ) {}
+
+    public record PagedResponse<T>(
+            List<T> content,
+            int currentPage,
+            int totalPages,
+            long totalElements
+    ) {}
 }

@@ -2,7 +2,12 @@ package com.oms.infrastructure.adapter.output.persistence;
 
 import com.oms.application.port.output.OrderRepositoryPort;
 import com.oms.domain.model.Order;
+import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +47,24 @@ public class PostgresOrderAdapter implements OrderRepositoryPort {
     }
 
     @Override
-    public List<Order> findAll() {
-        return mapper.toDomainList(jpaRepository.findAll());
+    public PagedResult<Order> findAll(int page, int size, OrderStatus status) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<OrderJpaEntity> entityPage;
+        
+        if (status != null) {
+            entityPage = jpaRepository.findByStatus(status.name(), pageable);
+        } else {
+            entityPage = jpaRepository.findAll(pageable);
+        }
+
+        List<Order> content = mapper.toDomainList(entityPage.getContent());
+        
+        return new PagedResult<>(
+                content,
+                entityPage.getNumber(),
+                entityPage.getSize(),
+                entityPage.getTotalElements(),
+                entityPage.getTotalPages()
+        );
     }
 }

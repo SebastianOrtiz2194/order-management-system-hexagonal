@@ -1,7 +1,9 @@
 package com.oms.application.port.input;
 
 import com.oms.domain.model.Order;
-import java.util.List;
+import com.oms.domain.model.OrderStatus;
+import com.oms.domain.model.PagedResult;
+
 import java.util.UUID;
 
 /**
@@ -9,5 +11,5 @@ import java.util.UUID;
  */
 public interface GetOrderUseCase {
     Order getOrderById(UUID id);
-    List<Order> getAllOrders();
+    PagedResult<Order> getAllOrders(int page, int size, OrderStatus status);
 }

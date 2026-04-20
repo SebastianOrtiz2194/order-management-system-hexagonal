@@ -165,7 +165,7 @@ class OrderControllerIT {
     // ─── GET /api/v1/orders ───────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /orders - 200 OK returns list of orders")
+    @DisplayName("GET /orders - 200 OK returns paginated list of orders")
     void getAllOrders_returns200WithList() throws Exception {
         // Given: creamos al menos una orden
         mockMvc.perform(post(BASE_URL)
@@ -174,9 +174,12 @@ class OrderControllerIT {
                 .andExpect(status().isCreated());
 
         // When / Then
-        mockMvc.perform(get(BASE_URL))
+        mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber())
+                .andExpect(jsonPath("$.currentPage").isNumber());
     }
 
     // ─── PATCH /api/v1/orders/{id}/status ────────────────────────────────────────

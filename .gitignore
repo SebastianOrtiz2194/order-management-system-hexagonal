@@ -9,8 +9,7 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 
 # ---- Environment / Secrets ----
-# NUNCA commitear el .env real (contiene contraseñas).
-# Usa .env.example como plantilla pública.
+# .env.example como plantilla pública.
 .env
 
 # ---- IDE ----
