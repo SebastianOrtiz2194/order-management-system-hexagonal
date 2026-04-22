@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Entidad 'Order' y Aggregate Root de nuestro dominio de gestión de pedidos.
- * Como Aggregate Root, es el único objeto del dominio con el cual los adaptadores interactúan.
- * No tiene anotaciones de frameworks como '@Entity'. Todo el estado se maneja con constructores o métodos lógicos puro Java.
+ * The 'Order' entity and Aggregate Root for our order management domain.
+ * As an Aggregate Root, it acts as the single point of interaction for the domain model.
+ * It is free from framework annotations like '@Entity'. State manipulation is strictly 
+ * controlled through constructors and pure Java behavior methods to ensure consistency.
  */
 @Getter
 @Builder
@@ -31,11 +32,11 @@ public class Order {
     private LocalDateTime updatedAt;
 
     /**
-     * Comportamiento del dominio: calcular el total de la orden basado en los ítems
-     * y obligar al estado PENDING a la hora de inicializar/validar un pedido entrante.
+     * Domain behavior: Calculates the total amount of the order based on its items
+     * and forces the initial state to PENDING when validating an incoming order request.
      * <p>
-     * Aquí no utilizamos "Setters" estándar. Toda mutación del estado pasa por 
-     * métodos explícitos del dominio que aseguran coherencia. (ejemplo: updateStatus())
+     * We avoid using standard "Setters" here. Any state mutation goes through 
+     * explicit domain methods that enforce consistency and business rules (e.g., updateStatus()).
      */
     public void validateAndInitialize() {
         if (customerName == null || customerName.trim().isEmpty()) {
@@ -47,13 +48,13 @@ public class Order {
 
         this.status = OrderStatus.PENDING;
         
-        // Sumamos todos los subtotales usando Streams de Java
+        // Sum all item subtotals using Java Streams
         this.totalAmount = items.stream()
                 .map(OrderItem::calculateSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        // Asignamos un ID si no hay uno (esto será valioso más adelante, 
-        // ya que nuestro JPA repository tratará de persistir este ID ya definido)
+        // Assign a default ID if none exists. This proves valuable when the 
+        // JPA repository attempts to persist the entity by treating it as a new record.
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }
@@ -65,9 +66,12 @@ public class Order {
     }
 
     /**
-     * Mutador de comportamiento (No usamos Setters crudos)
-     * En DDD (Domain Driven Design), este tipo de métodos encapsulan la progresión
-     * del estado de la orden (máquina de estados).
+     * Behavior mutator (Raw setters are not used).
+     * In Domain-Driven Design (DDD), these types of methods encapsulate the 
+     * progression of the order's state (acting like a finite state machine).
+     *
+     * @param newStatus The target state for the order transition.
+     * @throws InvalidOrderException if the transition is explicitly prohibited.
      */
     public void updateStatus(OrderStatus newStatus) {
         if (newStatus == null) {

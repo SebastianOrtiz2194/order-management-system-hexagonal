@@ -7,7 +7,9 @@ import com.oms.domain.model.PagedResult;
 import java.util.UUID;
 
 /**
- * Caso de Uso (Input Port): "Obtener información del pedido basándose en su ID UUID."
+ * Use Case (Input Port): Defines operations to retrieve order information.
+ * This includes fetching an individual order by its unique UUID and fetching 
+ * a paginated list of all orders, optionally filtered by status.
  */
 public interface GetOrderUseCase {
     Order getOrderById(UUID id);

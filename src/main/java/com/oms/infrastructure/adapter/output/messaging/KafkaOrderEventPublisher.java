@@ -9,7 +9,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de Salida apuntando a nuestro Kafka broker configurado.
+ * Output Adapter targeting the configured Kafka broker.
+ * Responsible for transmitting domain events to external systems.
  */
 @Component
 @RequiredArgsConstructor
@@ -18,10 +19,17 @@ public class KafkaOrderEventPublisher implements OrderEventPublisherPort {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    /**
+     * Publishes an OrderCreatedEvent to Kafka.
+     * Uses the orderId as the message key to implement the Kafka Routing Pattern, 
+     * ensuring strictly ordered delivery within the specific partition.
+     *
+     * @param event The domain event to publish.
+     */
     @Override
     public void publish(OrderCreatedEvent event) {
-        // Enlazar la Key del evento Kafka explícitamente al orderId para forzar el
-        // Kafka Routing Pattern (Garantizando la semántica de entrega ordenada dentro de esa partición)
+        // Explicitly bind the Kafka event key to the orderId to enforce 
+        // partition-level ordering semantics.
         String kafkaKey = event.orderId().toString();
 
         log.info("Publishing OrderCreatedEvent to Kafka Topic: [{}] -> Key: [{}]", KafkaConfig.ORDER_EVENTS_TOPIC, kafkaKey);
@@ -32,7 +40,8 @@ public class KafkaOrderEventPublisher implements OrderEventPublisherPort {
                     log.debug("Event successfully persisted on partition {}", result.getRecordMetadata().partition());
                 } else {
                     log.error("Failed persisting Event on Kafka!", ex);
-                    // Opcional: Para Resiliencia, aquí podría enrutarse a un topic DLQ (Dead Letter Queue) o tabla de Outbox en DB.
+                    // Optional: For enhanced resilience, this could route to a Dead Letter Queue (DLQ) 
+                    // or an Outbox table in the database.
                 }
             });
     }

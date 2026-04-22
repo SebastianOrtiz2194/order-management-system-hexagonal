@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Interceptor AOP global de Spring para el mapeo de Excepciones limpias de Dominio
- * a códigos de respuesta HTTP amigables (400, 404, etc.)
+ * Spring-managed global AOP interceptor responsible for mapping pure Domain exceptions 
+ * into standardized, user-friendly HTTP responses (e.g., 400 Bad Request, 404 Not Found).
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    // Errores de las validaciones DTO de Entrada de los Request (@Valid)
+    // Handles validation errors originating from Input DTO constraints (@Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidations(MethodArgumentNotValidException ex) {
         String validationErrors = ex.getBindingResult()

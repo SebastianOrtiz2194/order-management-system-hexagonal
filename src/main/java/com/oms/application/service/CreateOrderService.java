@@ -8,14 +8,15 @@ import com.oms.domain.model.Order;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Orquestador principal de la "Creación de Orden".
+ * Primary orchestrator for the "Create Order" workflow.
  * 
- * Flujo:
- * 1. Llama al dominio puro (validateAndInitialize) para validar negocio.
- * 2. Manda a guardar el objeto en persistencia (adaptador externo lo hará real).
- * 3. Publica un evento de Dominio para que futuros sub-sistemas actúen (Kafka en Fase 5).
+ * Workflow:
+ * 1. Delegates to the pure domain model (validateAndInitialize) to enforce business rules.
+ * 2. Commands the repository output port to persist the object.
+ * 3. Publishes a Domain Event to notify downstream sub-systems (e.g., via Kafka).
  * 
- * NOTA: No usamos '@Service' de Spring aquí para mantener esta capa "Pura".
+ * NOTE: We do not use Spring's '@Service' annotation here to maintain the 
+ * technology-agnostic purity of the application service layer.
  */
 @RequiredArgsConstructor
 public class CreateOrderService implements CreateOrderUseCase {
@@ -25,13 +26,13 @@ public class CreateOrderService implements CreateOrderUseCase {
 
     @Override
     public Order createOrder(Order orderCommand) {
-        // 1. Dominio: Valida reglas y define estado inicial
+        // 1. Domain: Validate rules and define initial state
         orderCommand.validateAndInitialize();
         
-        // 2. Persistencia secundaria
+        // 2. Secondary persistence port
         Order savedOrder = orderRepository.save(orderCommand);
         
-        // 3. Generación local del Evento de Dominio Asíncrono
+        // 3. Local generation of the Async Domain Event
         OrderCreatedEvent event = new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getCustomerName(),

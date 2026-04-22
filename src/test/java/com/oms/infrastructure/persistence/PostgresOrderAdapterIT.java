@@ -26,15 +26,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Test de Integración — Capa de Persistencia.
+ * Integration Test — Persistence Layer.
  *
- * <p>Usamos Testcontainers para levantar un contenedor real de PostgreSQL en Docker.
- * Redis y Kafka son reemplazados con {@code @MockBean} para aislar el test de
- * dependencias externas que no son relevantes para verificar la persistencia.</p>
+ * <p>Utilizes Testcontainers to spin up a live PostgreSQL instance in Docker. 
+ * Redis and Kafka are mocked via {@code @MockBean} to isolate persistence-specific validation.</p>
  *
- * <p>@SpringBootTest levanta el contexto completo de Spring incluyendo Flyway,
- * JPA e Hibernate, asegurándonos de que el esquema real (V1__Initial_schema.sql)
- * es aplicado contra el contenedor antes de cada ejecución de test.</p>
+ * <p>{@code @SpringBootTest} initializes the full application context, ensuring 
+ * that database migrations (Flyway) are correctly applied to the container 
+ * before test execution.</p>
  */
 @SpringBootTest
 @Testcontainers
@@ -42,9 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PostgresOrderAdapterIT {
 
     /**
-     * Declaramos el contenedor como @Container static para que Testcontainers lo
-     * comparta entre todos los métodos de test. Esto evita levantar/bajar Docker
-     * en cada @Test, lo que mejora drásticamente el tiempo de ejecución.
+     * Shared static container instance to optimize execution time across multiple test methods.
      */
     @Container
     @SuppressWarnings("resource")
@@ -54,9 +51,7 @@ class PostgresOrderAdapterIT {
             .withPassword("test_password");
 
     /**
-     * @DynamicPropertySource: el puente entre Testcontainers y Spring.
-     * Sobreescribe dinámicamente las propiedades de datasource con las coordenadas
-     * del contenedor que Docker eligió (puerto efímero, host, etc.).
+     * Dynamically maps container connection properties into the Spring Environment.
      */
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -65,30 +60,21 @@ class PostgresOrderAdapterIT {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    /**
-     * @MockBean reemplaza el bean real de Redis por un Mock de Mockito en el
-     * ApplicationContext. El adaptador de cache devuelve vacío por defecto,
-     * lo que hace que el GetOrderService vaya directamente a la base de datos.
-     */
+    /** Mocks the Redis cache adapter to simulate cache misses. */
     @MockBean
     private OrderCachePort orderCachePort;
 
-    /**
-     * @MockBean para Kafka. El publicador de eventos no hace nada durante los tests,
-     * evitando timeouts de conexión al broker.
-     */
+    /** Mocks the Kafka publisher to prevent connection overhead during persistence tests. */
     @MockBean
     private OrderEventPublisherPort orderEventPublisherPort;
 
     @Autowired
     private PostgresOrderAdapter postgresOrderAdapter;
 
-    // ─── Factory methods ────────────────────────────────────────────────────────
+    // ─── Factory Methods ────────────────────────────────────────────────────────
 
     /**
-     * Creamos un Order de dominio de muestra para cada test, reutilizando la lógica
-     * real del Aggregate Root (validateAndInitialize) en lugar de construir objetos
-     * "mágicos". Esto prueba el dominio y la persistencia al mismo tiempo.
+     * Generates a sample domain Order, leveraging the actual aggregate root logic.
      */
     private Order buildSampleOrder() {
         OrderItem item = OrderItem.builder()
@@ -167,7 +153,6 @@ class PostgresOrderAdapterIT {
         var result = postgresOrderAdapter.findAll(0, 20, null);
 
         // Then
-        // findAll() retorna la pagina con al menos los dos que acabamos de persistir
         assertThat(result.content()).hasSizeGreaterThanOrEqualTo(2);
         assertThat(result.totalElements()).isGreaterThanOrEqualTo(2);
     }

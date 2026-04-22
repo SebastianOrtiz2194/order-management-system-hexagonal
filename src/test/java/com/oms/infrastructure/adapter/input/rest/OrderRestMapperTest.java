@@ -13,6 +13,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the OrderRestMapper.
+ * Verifies structural translations between REST DTOs and Domain Models.
+ */
 class OrderRestMapperTest {
 
     private final OrderRestMapper mapper = Mappers.getMapper(OrderRestMapper.class);
@@ -31,7 +35,7 @@ class OrderRestMapperTest {
         assertEquals(1, domain.getItems().size());
         assertEquals("prod-1", domain.getItems().get(0).getProductId());
         
-        // Fields with @Mapping(ignore = true) should be null
+        // Fields with @Mapping(ignore = true) should remain null during the mapping process.
         assertNull(domain.getId());
         assertNull(domain.getStatus());
         assertNull(domain.getTotalAmount());

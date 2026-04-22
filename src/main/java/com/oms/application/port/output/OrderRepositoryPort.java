@@ -8,9 +8,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Output Port (Adaptador de infraestructura necesario).
- * Indica que necesitamos que Alguien (una capa inferior) sea capaz de almacenar Order,
- * sin decirle a ese "Alguien" que debe usar JPA ni Base Relacionales.
+ * Output Port: Persistence Adapter Requirement.
+ * Denotes that the application needs a mechanism (a lower layer) capable of 
+ * storing and retrieving Order records, without imposing implementation details 
+ * like JPA, SQL, or NoSQL databases.
  */
 public interface OrderRepositoryPort {
     Order save(Order order);

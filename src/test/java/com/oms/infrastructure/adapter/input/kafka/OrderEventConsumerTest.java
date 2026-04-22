@@ -26,11 +26,11 @@ import static org.mockito.Mockito.*;
  * <p>
  * Validates the consumer's resilience behaviors:
  * <ul>
- *   <li>Happy path: event is processed and cached correctly.</li>
- *   <li>Null payload: skipped without exception (no retry needed).</li>
- *   <li>Null required fields: skipped without exception.</li>
- *   <li>Invalid status: caught as non-retryable, no re-throw.</li>
- *   <li>Unexpected errors (e.g. Redis failure): re-thrown for DefaultErrorHandler retry + DLQ.</li>
+ *   <li>Happy path: Event is processed and cached correctly.</li>
+ *   <li>Null payload: Skipped without exception (no retry required).</li>
+ *   <li>Null required fields: Skipped without exception.</li>
+ *   <li>Invalid status: Caught as a non-retryable error, no re-throw.</li>
+ *   <li>Unexpected errors (e.g., Redis failure): Re-thrown for DefaultErrorHandler retry policy and DLQ routing.</li>
  * </ul>
  */
 @ExtendWith(MockitoExtension.class)

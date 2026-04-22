@@ -6,6 +6,10 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * JPA Entity representing an item within an order.
+ * Strictly used for database mapping purposes in the order_items table.
+ */
 @Entity
 @Table(name = "order_items")
 @Getter
@@ -31,7 +35,7 @@ public class OrderItemJpaEntity {
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
-    // Clave Foránea apuntando a orders
+    // Foreign Key pointing to the orders table
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private OrderJpaEntity order;

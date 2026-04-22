@@ -3,8 +3,8 @@ package com.oms.domain.model;
 import java.util.Set;
 
 /**
- * Enum puro del dominio que representa el ciclo de vida de una orden
- * y funciona como una máquina de estados finitos (FSM).
+ * Pure domain enumeration denoting the lifecycle stages of an order.
+ * Operates as a Finite State Machine (FSM) dictating allowed transitions.
  */
 public enum OrderStatus {
     DELIVERED(Set.of()),
@@ -20,7 +20,10 @@ public enum OrderStatus {
     }
 
     /**
-     * Valida si el estado actual puede transicionar al estado de destino.
+     * Validates if the current state is permitted to transition to the requested target state.
+     *
+     * @param targetStatus The desired new state.
+     * @return true if the transition is explicitly allowed, otherwise false.
      */
     public boolean canTransitionTo(OrderStatus targetStatus) {
         return this.validTransitions.contains(targetStatus);

@@ -3,9 +3,10 @@ package com.oms.application.port.input;
 import com.oms.domain.model.Order;
 
 /**
- * Caso de Uso (Input Port): "El sistema debe permitir que se cree una Orden".
- * Esta abstracción de entrada define lo que la aplicación puede hacer. Un adaptador 
- * externo, como un Spring '@RestController' (incluso una CLI o test), invocará esta ruta.
+ * Use Case (Input Port): "The system must allow an Order to be created."
+ * This input abstraction defines operations the application exposes. An external adapter,
+ * such as a Spring '@RestController' (or even a CLI or test), will invoke this port 
+ * to trigger the business use case.
  */
 public interface CreateOrderUseCase {
     Order createOrder(Order orderCommand);

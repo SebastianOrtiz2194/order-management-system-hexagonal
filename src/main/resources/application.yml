@@ -6,61 +6,61 @@ spring:
     name: order-management-system-hexagonal
   
   # ==============================================================
-  # PERSISTENCIA: PostgreSQL
+  # PERSISTENCE: PostgreSQL
   # ==============================================================
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:oms_db}
     username: ${POSTGRES_USER:oms_user}
     password: ${POSTGRES_PASSWORD:oms_password}
     driver-class-name: org.postgresql.Driver
-    # HikariCP es el connection pool por defecto, optimizado para alto throughput
+    # HikariCP is the default connection pool, optimized for high throughput.
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
   
   jpa:
-    # Mostramos el SQL en desarrollo
+    # Display SQL queries during development for debugging purposes.
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        # 'update' permite auto-crear tablas (ideal solo MVP/Desarrollo)
-        # En prod: 'validate' y usamos Flyway/Liquibase
+        # 'update' allows automatic table creation (ideal for MVP/Development only).
+        # In production environments, use 'validate' in conjunction with Flyway/Liquibase.
         hbm2ddl.auto: validate
   
   # ==============================================================
-  # CACHÉ: Redis
+  # CACHE: Redis
   # ==============================================================
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:oms_redis_pass}
-      timeout: 2000 # Timeout de conexión en ms
+      timeout: 2000 # Connection timeout in milliseconds.
   
   # ==============================================================
-  # MENSAJERÍA ASÍNCRONA: Kafka
+  # ASYNCHRONOUS MESSAGING: Kafka
   # ==============================================================
   kafka:
     bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
     producer:
-      # Estrategia de serialización: la Key es un String (Order ID), 
-      # el Value será un JSON (el propio evento OrderCreated)
+      # Serialization strategy: Key is a String (Order ID), 
+      # Value is JSON (the OrderCreated event payload).
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.add.type.headers: true # Ayuda al consumidor a saber qué clase parsear
+        spring.json.add.type.headers: true # Includes type headers to help consumers identify the class to parse.
     consumer:
-      # Grupo de consumidores. Múltiples instancias compartiendo grupo = balanceo de carga
+      # Consumer Group: Multiple instances sharing a group enable load balancing.
       group-id: oms-consumer-group
-      auto-offset-reset: earliest # Si no hay offset previo, arrancar desde el principio del topic
+      auto-offset-reset: earliest # If no previous offset exists, start from the beginning of the topic.
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.oms.domain.event" # Seguridad: solo de-serializar esta clase
+        spring.json.trusted.packages: "com.oms.domain.event" # Security: only permit deserialization for this package.
  
 # ==============================================================
-# OBSERVABILIDAD: Actuator endpoints
+# OBSERVABILITY: Actuator Endpoints
 # ==============================================================
 management:
   endpoints:
@@ -69,30 +69,30 @@ management:
         include: health, info, metrics, prometheus
   endpoint:
     health:
-      show-details: always # Expone si BD/Redis/Kafka están conectados
+      show-details: always # Exposes health status for DB, Redis, and Kafka connections.
   
   # ==============================================================
   # TRACING: Micrometer + Zipkin
   # ==============================================================
   tracing:
     sampling:
-      probability: 1.0 # Capturamos el 100% en desarrollo/formación
+      probability: 1.0 # Captures 100% of traces for development and analysis.
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_URL:http://localhost:9411}/api/v2/spans
 
 # ==============================================================
-# SEGURIDAD: Credenciales Basic Auth
+# SECURITY: Basic Authentication Credentials
 # ==============================================================
 oms:
   security:
     username: ${OMS_SECURITY_USER:admin}
     password: ${OMS_SECURITY_PASS:admin123}
 
-# ================= =============================================
-# LOGGING: Formato estructurado con Trace/Span ID
+# ==============================================================
+# LOGGING: Structured format with Trace/Span IDs
 # ==============================================================
 logging:
   pattern:
-    # Formato estándar de Spring: Severity [App, TraceId, SpanId] Logger : Message
+    # Standard Spring logging format: Severity [App, TraceId, SpanId] Logger : Message
     level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

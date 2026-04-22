@@ -21,6 +21,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for GetOrderService.
+ * Validates order retrieval logic (Cache-Aside pattern) and status updates.
+ */
 @ExtendWith(MockitoExtension.class)
 class GetOrderServiceTest {
 
@@ -46,6 +50,10 @@ class GetOrderServiceTest {
                 .build();
     }
 
+    /**
+     * Verifies that the service retrieves the order from the cache if it's available, 
+     * bypassing the repository.
+     */
     @Test
     void shouldReturnFromCacheWhenAvailable() {
         // Arrange
@@ -60,6 +68,10 @@ class GetOrderServiceTest {
         verifyNoInteractions(orderRepository);
     }
 
+    /**
+     * Verifies that on a cache miss, the service retrieves the order from the repository 
+     * and subsequently populates the cache.
+     */
     @Test
     void shouldReturnFromRepoAndSaveInCacheWhenCacheMiss() {
         // Arrange
@@ -76,6 +88,10 @@ class GetOrderServiceTest {
         verify(orderCachePort, times(1)).save(dummyOrder);
     }
 
+    /**
+     * Verifies that an OrderNotFoundException is thrown if the order doesn't exist 
+     * in either the cache or the repository.
+     */
     @Test
     void shouldThrowExceptionWhenOrderNotFoundInBoth() {
         // Arrange
@@ -86,6 +102,9 @@ class GetOrderServiceTest {
         assertThrows(OrderNotFoundException.class, () -> getOrderService.getOrderById(orderId));
     }
 
+    /**
+     * Verifies that updating an order's status also evicts the now-stale cache entry.
+     */
     @Test
     void shouldUpdateStatusAndEvictCache() {
         // Arrange
@@ -101,6 +120,9 @@ class GetOrderServiceTest {
         verify(orderCachePort, times(1)).evict(orderId);
     }
 
+    /**
+     * Verifies paginated retrieval of all orders from the repository.
+     */
     @Test
     void shouldReturnAllOrdersFromRepo() {
         // Arrange
