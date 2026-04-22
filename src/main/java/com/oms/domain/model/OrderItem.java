@@ -5,12 +5,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-//import java.util.UUID;
 
 /**
  * Value Object 'OrderItem'.
- * Representa la línea de un pedido. Como Value Object, no necesita un ID propio
- * dentro del dominio.
+ * Represents a single line item within an order. As a Value Object, it does not 
+ * inherently require its own unique domain identity.
  */
 @Getter
 @Builder
@@ -24,8 +23,10 @@ public class OrderItem {
     private BigDecimal unitPrice;
 
     /**
-     * Comportamiento estático o inmutable:
-     * Calcula dinámicamente el precio total del ítem (precio unitario * cantidad).
+     * Immutable or static behavior block:
+     * Dynamically computes the total price for this specific item (unit price * quantity).
+     * 
+     * @return The calculated subtotal as a BigDecimal.
      */
     public BigDecimal calculateSubtotal() {
         if (unitPrice == null || quantity <= 0) {

@@ -16,17 +16,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.List;
-//import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Probando Service Application sin cargar contexto Spring. Usamos Mockito para
- * "aislar"
- * el puerto de salida a Base de Datos de JPA real y simular la publicación en
- * Kafka
+ * Unit tests for CreateOrderService. 
+ * Operates by testing the application service without loading the full Spring context. 
+ * Mocks are used to isolate the output ports (Persistence and Messaging).
  */
 @ExtendWith(MockitoExtension.class)
 class CreateOrderServiceTest {
@@ -51,23 +49,25 @@ class CreateOrderServiceTest {
                 .build();
     }
 
+    /**
+     * Verifies the successful creation flow: validation, persistence, and event publication.
+     */
     @Test
     void createOrderSuccessFlow() {
-        // Simulate DB Persistence Behavior (simulamos que save() siempre devuelve
-        // nuestro objeto mockeado)
+        // Arrange: Simulate persistence behavior where save() returns the provided object.
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        // Act
         Order result = createOrderService.createOrder(dummyOrder);
 
-        // Verificamos inicialización de Dominio (si falló 'validateAndInitialize' esto
-        // explotaba antes)
+        // Assert: Domain initialization (id assignment and initial PENDING status).
         assertNotNull(result.getId());
         assertEquals(OrderStatus.PENDING, result.getStatus());
 
-        // Verificamos interacción del Adaptador (Llamada Obligatoria 'save()')
+        // Assert: Interaction with the persistence adapter.
         verify(orderRepository, times(1)).save(any(Order.class));
 
-        // Verificamos Publicación del Evento
+        // Assert: Interaction with the event publisher.
         verify(eventPublisher, times(1)).publish(any(OrderCreatedEvent.class));
     }
 }

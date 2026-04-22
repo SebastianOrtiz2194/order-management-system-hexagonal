@@ -9,8 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Lugar Unificado de Inyección de Dependencias.
- * Esto "levanta" las clases puras en un contenedor Spring.
+ * Unified Dependency Injection Configuration.
+ * Instantiates pure application services and registers them within the Spring context.
+ * This avoids coupling business services with framework-specific annotations like @Service.
  */
 @Configuration
 public class BeanConfig {

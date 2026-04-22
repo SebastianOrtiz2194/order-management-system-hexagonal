@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Adaptador de Entrada: El REST Controller actúa delegando toda inteligencia a los
- * Puertos de Entrada (`UseCases`).
+ * Input Adapter: The REST Controller. Operates exclusively by delegating all business mechanics 
+ * and intelligence downstream to the designated Input Ports (`UseCases`).
  */
 @RestController
 @RequestMapping("/api/v1/orders")

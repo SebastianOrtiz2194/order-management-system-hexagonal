@@ -12,26 +12,32 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Registramos el JSON Mapper y RedisTemplate de Spring
+ * Configuration for Redis caching, including JSON serialization setups.
  */
 @Configuration
 public class RedisConfig {
 
+    /**
+     * Configures the Jackson ObjectMapper with support for Java 8 Time modules 
+     * and proper record serialization.
+     */
     @Bean
     public ObjectMapper objectMapper() {
-        // Soporte crítico para Serializar Clases Record y LocalDateTimes
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }
 
+    /**
+     * Configures the RedisTemplate for Order objects using JSON serialization.
+     */
     @Bean
     public RedisTemplate<String, Order> orderRedisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper mapper) {
         RedisTemplate<String, Order> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         
-        // Serializadores en crudo JSON (nos permite depurar la DB usando redis-cli 'GET key')
+        // Raw JSON serializers allow for easier debugging via redis-cli.
         Jackson2JsonRedisSerializer<Order> serializer = new Jackson2JsonRedisSerializer<>(mapper, Order.class);
         
         template.setKeySerializer(new StringRedisSerializer());

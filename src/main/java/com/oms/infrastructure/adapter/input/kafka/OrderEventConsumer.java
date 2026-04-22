@@ -16,16 +16,16 @@ import org.springframework.stereotype.Component;
 /**
  * Input Adapter (Driving Adapter) — Kafka Consumer.
  * <p>
- * Actúa como un servicio downstream que pre-calienta (Warm-Up) el caché Redis
- * al recibir eventos de creación de órdenes desde Kafka.
+ * Acts as a downstream service that pre-warms the Redis cache by actively 
+ * listening to order creation events from Kafka.
  * <p>
- * <b>Estrategia de resiliencia:</b>
+ * <b>Resilience Strategy:</b>
  * <ul>
- *   <li>Validación explícita del payload antes de procesarlo (null-safety).</li>
- *   <li>Try-catch interno para errores de lógica de negocio (e.g. status inválido).</li>
- *   <li>Los errores de deserialización y las excepciones no capturadas son manejados
- *       por el {@code DefaultErrorHandler} configurado en {@link KafkaConfig},
- *       que reintentará hasta 3 veces y luego enviará el mensaje al Dead Letter Topic (DLT).</li>
+ *   <li>Explicit validation of the payload before further processing (null-safety).</li>
+ *   <li>Internal try-catch strategy to gracefully handle business logic errors (e.g., invalid status).</li>
+ *   <li>Deserialization discrepancies and uncaught exceptions are intercepted and managed 
+ *       by the {@code DefaultErrorHandler} configured in {@link KafkaConfig}, 
+ *       which performs up to 3 retry attempts before routing the faulty message to a Dead Letter Topic (DLT).</li>
  * </ul>
  */
 @Component
@@ -36,14 +36,14 @@ public class OrderEventConsumer {
     private final OrderCachePort cachePort;
 
     /**
-     * Consume eventos {@link OrderCreatedEvent} desde el topic {@code order-events}.
-     * Reconstruye un modelo de dominio parcial a partir del evento y lo persiste en
-     * el caché Redis para acelerar futuras lecturas (patrón Cache Warm-Up).
+     * Consumes {@link OrderCreatedEvent} events sourced from the {@code order-events} topic.
+     * Reconstitutes a partial domain model originating from the incoming event and subsequently 
+     * persists it within the Redis cache to vastly accelerate subsequent read operations (Cache Warm-Up pattern).
      *
-     * @param event     el evento de creación de orden deserializado por Spring Kafka
-     * @param topic     nombre del topic de origen (inyectado por Spring para logging)
-     * @param partition partición de Kafka desde la que se leyó el mensaje
-     * @param offset    offset del mensaje dentro de la partición
+     * @param event     The deserialized order creation event provided by Spring Kafka.
+     * @param topic     Originating topic name (Optional, typically injected by Spring for logging context).
+     * @param partition The specific Kafka partition from which the message was consumed.
+     * @param offset    The partition-specific message offset.
      */
     @KafkaListener(topics = KafkaConfig.ORDER_EVENTS_TOPIC, groupId = "oms-consumer-group")
     public void consumeOrderCreated(@Payload OrderCreatedEvent event) {
@@ -60,8 +60,8 @@ public class OrderEventConsumer {
         log.info("|| KAFKA CONSUMER || -> Event received processing Order ID: {}", event.orderId());
         
         try {
-            // Aquí demostramos un patrón Event-Driven (Warm up) reconstruyendo el modelo 
-            // a partir del evento, y persistiendo/precalentando la memoria (Cache).
+            // Employs an Event-Driven (Warm-up) pattern here by rebuilding the domain model 
+            // directly from the incoming event data and caching it securely.
             Order reconstitutedOrder = Order.builder()
                     .id(event.orderId())
                     .customerName(event.customerName())

@@ -9,6 +9,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the Order Aggregate Root.
+ * Validates core business rules, state transitions, and initialization logic.
+ */
 class OrderTest {
 
     @Test
@@ -29,7 +33,7 @@ class OrderTest {
         order.validateAndInitialize();
 
         // Assert
-        assertNotNull(order.getId(), "La clave 'id' debería crearse si es nula");
+        assertNotNull(order.getId(), "The 'id' should be automatically generated if null during initialization.");
         assertEquals(OrderStatus.PENDING, order.getStatus());
         assertEquals(new BigDecimal("100.00"), order.getTotalAmount());
     }
@@ -59,7 +63,7 @@ class OrderTest {
         // Arrange
         Order emptyNameOrder = Order.builder()
                 .customerName("  ")
-                .items(List.of(OrderItem.builder().build())) // items dummy
+                .items(List.of(OrderItem.builder().build())) // Dummy item
                 .build();
 
         // Act & Assert
@@ -77,23 +81,23 @@ class OrderTest {
         order.validateAndInitialize();
         assertEquals(OrderStatus.PENDING, order.getStatus());
         
-        // Act & Assert: Valid PENDING -> CONFIRMED
+        // Act & Assert: Valid PENDING -> CONFIRMED transition
         order.updateStatus(OrderStatus.CONFIRMED);
         assertEquals(OrderStatus.CONFIRMED, order.getStatus());
         assertNotNull(order.getUpdatedAt());
         
-        // Act & Assert: Invalid CONFIRMED -> PENDING
+        // Act & Assert: Invalid CONFIRMED -> PENDING transition (regression check)
         assertThrows(InvalidOrderException.class, () -> order.updateStatus(OrderStatus.PENDING));
         
-        // Act & Assert: Valid CONFIRMED -> SHIPPED
+        // Act & Assert: Valid CONFIRMED -> SHIPPED transition
         order.updateStatus(OrderStatus.SHIPPED);
         assertEquals(OrderStatus.SHIPPED, order.getStatus());
         
-        // Act & Assert: Valid SHIPPED -> DELIVERED
+        // Act & Assert: Valid SHIPPED -> DELIVERED transition
         order.updateStatus(OrderStatus.DELIVERED);
         assertEquals(OrderStatus.DELIVERED, order.getStatus());
         
-        // Act & Assert: Invalid DELIVERED -> CANCELLED
+        // Act & Assert: Invalid DELIVERED -> CANCELLED transition (terminal state check)
         assertThrows(InvalidOrderException.class, () -> order.updateStatus(OrderStatus.CANCELLED));
     }
 }

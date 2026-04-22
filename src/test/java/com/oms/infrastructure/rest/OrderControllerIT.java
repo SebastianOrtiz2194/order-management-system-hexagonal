@@ -29,14 +29,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Test de Integración — Capa REST (API End-to-End).
+ * Integration Test — REST Layer (End-to-End API).
  *
- * <p>Ejercitamos el flujo completo desde la petición HTTP hasta la base de datos real
- * (via Testcontainers). Redis y Kafka son aislados con {@code @MockBean} para que
- * el test se concentre exclusivamente en el flujo REST → Dominio → PostgreSQL.</p>
+ * <p>Validates the full application lifecycle from HTTP requests through to the relational database. 
+ * Testcontainers manages a dedicated PostgreSQL instance. Redis and Kafka are isolated via {@code @MockBean} 
+ * to maintain focus on the REST-to-Domain-to-PostgreSQL flow.</p>
  *
- * <p>{@code @AutoConfigureMockMvc} inyecta un cliente HTTP de prueba que simula las
- * peticiones sin necesidad de levantar un servidor real en un puerto.</p>
+ * <p>{@code @AutoConfigureMockMvc} provides a mock HTTP client that simulates requests without 
+ * binding to a real network port.</p>
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -59,11 +59,11 @@ class OrderControllerIT {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    /** Aiisla el cache — devuelve Optional.empty() por defecto (cache miss). */
+    /** Mocked cache port to simulate cache misses during retrieval. */
     @MockBean
     private OrderCachePort orderCachePort;
 
-    /** Aisla el publisher de Kafka — no hace nada durante los tests. */
+    /** Mocked Kafka publisher to avoid broker interaction overhead. */
     @MockBean
     private OrderEventPublisherPort orderEventPublisherPort;
 
@@ -75,7 +75,7 @@ class OrderControllerIT {
 
     private static final String BASE_URL = "/api/v1/orders";
 
-    // ─── Factory helpers ─────────────────────────────────────────────────────────
+    // ─── Factory Helpers ─────────────────────────────────────────────────────────
 
     private OrderDTOs.CreateOrderRequest buildValidCreateRequest() {
         OrderDTOs.OrderItemRequest item = new OrderDTOs.OrderItemRequest(
@@ -136,7 +136,7 @@ class OrderControllerIT {
     @Test
     @DisplayName("GET /orders/{id} - 200 OK returns existing order")
     void getOrderById_whenOrderExists_returns200() throws Exception {
-        // Given: primero creamos una orden real
+        // Given: Create an initial order to populate the database.
         String createJson = objectMapper.writeValueAsString(buildValidCreateRequest());
         MvcResult createResult = mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +147,7 @@ class OrderControllerIT {
         String responseBody = createResult.getResponse().getContentAsString();
         OrderDTOs.OrderResponse created = objectMapper.readValue(responseBody, OrderDTOs.OrderResponse.class);
 
-        // When / Then
+        // When / Then: Verify retrieval by ID.
         mockMvc.perform(get(BASE_URL + "/" + created.id()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(created.id()))
@@ -167,13 +167,13 @@ class OrderControllerIT {
     @Test
     @DisplayName("GET /orders - 200 OK returns paginated list of orders")
     void getAllOrders_returns200WithList() throws Exception {
-        // Given: creamos al menos una orden
+        // Given: Seed the database with a test order.
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildValidCreateRequest())))
                 .andExpect(status().isCreated());
 
-        // When / Then
+        // When / Then: Verify paginated retrieval.
         mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -187,7 +187,7 @@ class OrderControllerIT {
     @Test
     @DisplayName("PATCH /orders/{id}/status - 200 OK updates order status")
     void updateStatus_withValidTransition_returns200() throws Exception {
-        // Given: creamos una orden primero
+        // Given: Seed the database with a test order.
         String createJson = objectMapper.writeValueAsString(buildValidCreateRequest());
         MvcResult createResult = mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -199,7 +199,7 @@ class OrderControllerIT {
 
         OrderDTOs.UpdateStatusRequest updateRequest = new OrderDTOs.UpdateStatusRequest("CONFIRMED");
 
-        // When / Then
+        // When / Then: Verify status update.
         mockMvc.perform(patch(BASE_URL + "/" + created.id() + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
@@ -221,7 +221,7 @@ class OrderControllerIT {
     @Test
     @DisplayName("PATCH /orders/{id}/status - 400 Bad Request for invalid status value")
     void updateStatus_withInvalidStatus_returns400() throws Exception {
-        // Given: creamos una orden
+        // Given: Seed the database.
         MvcResult createResult = mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildValidCreateRequest())))
@@ -231,7 +231,7 @@ class OrderControllerIT {
 
         OrderDTOs.UpdateStatusRequest badRequest = new OrderDTOs.UpdateStatusRequest("INVALID_STATUS");
 
-        // When / Then: "INVALID_STATUS" no es un valor del enum OrderStatus → 400
+        // When / Then: Verify that invalid enum values trigger a 400 Bad Request.
         mockMvc.perform(patch(BASE_URL + "/" + created.id() + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
@@ -261,6 +261,6 @@ class OrderControllerIT {
                 .andExpect(status().isOk());
         
         mockMvc.perform(get("/swagger-ui.html"))
-                .andExpect(status().isFound()); // Redirect to swagger-ui/index.html
+                .andExpect(status().isFound()); // Expect redirect to swagger-ui/index.html
     }
 }

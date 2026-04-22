@@ -7,34 +7,39 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Data Transfer Objects (DTOs) specifically tailored for REST requests and responses.
+ * These structures isolate the domain from infrastructure presentation concerns.
+ */
 public class OrderDTOs {
 
     /**
-     * Payload de Recepción (Creación). Validaciones en la 'frontera' evitan peticiones
-     * mal formadas incluso antes de cruzar hacia los validadores del Dominio interno.
+     * Inbound Payload (Creation Request). Implements validations precisely at the 'boundary' 
+     * to outright reject malformed anomalies prior to interacting with internal Domain validators.
      */
     public record CreateOrderRequest(
-            @NotBlank(message = "El cliente es obligatorio")
+            @NotBlank(message = "Customer name is mandatory")
             String customerName,
 
-            @NotEmpty(message = "La orden no puede estar vacía")
+            @NotEmpty(message = "The order cannot be empty")
             List<OrderItemRequest> items
     ) {}
 
     public record OrderItemRequest(
-            @NotBlank String productId,
-            @NotBlank String productName,
-            @Positive int quantity,
-            @NotNull @Positive BigDecimal unitPrice
+            @NotBlank(message = "Product ID cannot be blank") String productId,
+            @NotBlank(message = "Product name cannot be blank") String productName,
+            @Positive(message = "Quantity must be strictly positive") int quantity,
+            @NotNull @Positive(message = "Unit price must be strictly positive") BigDecimal unitPrice
     ) {}
 
     public record UpdateStatusRequest(
-            @NotBlank(message = "El nuevo estado es obligatorio")
+            @NotBlank(message = "The new target status is mandatory")
             String status
     ) {}
 
     /**
-     * Payload de Retorno, omite información interna o técnica de bases de datos
+     * Outbound Payload (Response). Ensures internal domain modeling or underlying 
+     * technical database attributes are willfully abstracted from the API consumer.
      */
     public record OrderResponse(
             String id,
@@ -53,6 +58,9 @@ public class OrderDTOs {
             BigDecimal unitPrice
     ) {}
 
+    /**
+     * Structure tailored for paginated API responses.
+     */
     public record PagedResponse<T>(
             List<T> content,
             int currentPage,

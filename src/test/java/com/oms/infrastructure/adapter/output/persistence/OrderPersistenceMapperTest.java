@@ -14,6 +14,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the OrderPersistenceMapper.
+ * Verifies bidirectional mapping between rich Domain Models and anemic JPA Entities.
+ */
 class OrderPersistenceMapperTest {
 
     private final OrderPersistenceMapper mapper = Mappers.getMapper(OrderPersistenceMapper.class);
@@ -39,7 +43,7 @@ class OrderPersistenceMapperTest {
         assertEquals("Alice", entity.getCustomerName());
         assertEquals("PENDING", entity.getStatus());
         assertEquals(1, entity.getItems().size());
-        assertEquals(entity, entity.getItems().get(0).getOrder()); // Bi-directional link
+        assertEquals(entity, entity.getItems().get(0).getOrder()); // Bi-directional entity link verification
     }
 
     @Test

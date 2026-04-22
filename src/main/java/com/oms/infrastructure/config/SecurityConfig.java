@@ -16,10 +16,10 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Configuración de Seguridad de la Aplicación.
+ * Application Security Configuration.
  * 
- * Implementa Basic Authentication para endpoints protegidos, 
- * permitiendo acceso público a la documentación de Swagger.
+ * Implements Basic Authentication for protected endpoints while allowing 
+ * public access to Swagger documentation and Actuator endpoints.
  */
 @Configuration
 @EnableWebSecurity
@@ -34,18 +34,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitamos CSRF para el API REST (stateless)
+            // Disable CSRF for stateless REST API interactions.
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // Endpoints de Swagger: permitidos públicamente
+                // Swagger Documentation endpoints: publicly accessible.
                 .requestMatchers(
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
-                // Endpoints de Actuator: permitidos para monitoreo
+                // Actuator endpoints: accessible for monitoring purposes.
                 .requestMatchers("/actuator/**").permitAll()
-                // El resto del API: requiere autenticación
+                // All other API requests: require authentication.
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());
@@ -53,9 +53,12 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * In-memory user store for demonstration purposes. 
+     * In production, this would integrate with a persistent user repository.
+     */
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        // En una aplicación real (o fase siguiente), esto leería de la base de datos
         UserDetails user = User.builder()
             .username(username)
             .password(passwordEncoder.encode(password))
