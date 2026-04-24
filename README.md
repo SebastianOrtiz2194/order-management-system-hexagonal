@@ -1,10 +1,10 @@
-# Order Management System (OMS) 🛒
+# Order Management System (OMS)
 
 A robust, enterprise-grade prototype for an Order Management System built with **Java 21**, **Spring Boot 3.x** and meticulously structured using **Hexagonal Architecture (Ports and Adapters)** principles optimized for Cloud-Native environments.
 
 ---
 
-## 🏗️ Architecture Design
+## Architecture Design
 
 The system enforces a strict separation of concerns to maximize maintainability and testability:
 - **Core Domain (`com.oms.domain`)**: Contains the pure business rules (`Order`, `OrderItem`). It is framework-agnostic and relies entirely on pure Java.
@@ -13,7 +13,7 @@ The system enforces a strict separation of concerns to maximize maintainability 
 
 ---
 
-## 🚀 Setup & Local Execution
+## Setup & Local Execution
 
 To bootstrap the application locally, ensure your environment meets the following prerequisites:
 - **Java 21**
@@ -41,7 +41,7 @@ mvn spring-boot:run
 
 ---
 
-## 🔐 Security
+## Security
 
 The API is fully secured utilizing **Basic Authentication**.
 - **Username:** `admin`
@@ -51,7 +51,7 @@ When utilizing `curl`, append the flag `-u admin:admin123`. Environmental overri
 
 ---
 
-## 📡 Core API Endpoints
+## Core API Endpoints
 
 ### 1. Create a New Order
 **Request:**
@@ -108,7 +108,7 @@ curl -X PATCH http://localhost:8080/api/v1/orders/{UUID}/status \
 
 ---
 
-## 🔍 Observability, Telemetry & Tracing
+## Observability, Telemetry & Tracing
 
 The system is instrumented for advanced, production-ready observability using **Micrometer**, **Prometheus**, and **OpenTelemetry**.
 
@@ -120,8 +120,8 @@ The system is instrumented for advanced, production-ready observability using **
 
 ---
 
-## 🛠️ Validation & Testing Tools
-### 📮 Postman Collection
+## Validation & Testing Tools
+### Postman Collection
 A thoroughly documented Postman collection is anchored within the repository to streamline E2E testing workflows.
 - **File Locator:** `oms_postman_collection.json`
 - **Usage:** Simply import the file directly into your Postman client.
@@ -129,5 +129,3 @@ A thoroughly documented Postman collection is anchored within the repository to 
 - **Inherited Authentication:** Pre-configured to automatically inject the required `Basic Auth` HTTP Headers across all REST methods.
 
 ---
-
-*For an expansive, in-depth technical dive covering decisions, patterns, and implementation strategies, please read the [PROJECT_WALKTHROUGH.md](PROJECT_WALKTHROUGH.md).*
