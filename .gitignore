@@ -9,7 +9,6 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 
 # ---- Environment / Secrets ----
-# .env.example como plantilla pública.
 .env
 
 # ---- IDE ----
@@ -30,11 +29,8 @@ Thumbs.db
 *.log
 logs/
 
-# ---- Docker volumes (si se crean localmente) ----
+# ---- Docker volumes ----
 data/
-
-# ---- Agent Teams Lite ----
-.atl/
 
 # ---- Implementation Plan ----
 implementation_plan.md
