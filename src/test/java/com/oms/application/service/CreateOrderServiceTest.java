@@ -21,11 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for CreateOrderService. 
- * Operates by testing the application service without loading the full Spring context. 
- * Mocks are used to isolate the output ports (Persistence and Messaging).
- */
+// Unit tests for CreateOrderService.
 @ExtendWith(MockitoExtension.class)
 class CreateOrderServiceTest {
 
@@ -50,11 +46,13 @@ class CreateOrderServiceTest {
     }
 
     /**
-     * Verifies the successful creation flow: validation, persistence, and event publication.
+     * Verifies the successful creation flow: validation, persistence, and event
+     * publication.
      */
     @Test
     void createOrderSuccessFlow() {
-        // Arrange: Simulate persistence behavior where save() returns the provided object.
+        // Arrange: Simulate persistence behavior where save() returns the provided
+        // object.
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
