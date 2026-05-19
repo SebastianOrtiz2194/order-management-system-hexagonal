@@ -24,8 +24,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # 'update' allows automatic table creation (ideal for MVP/Development only).
-        # In production environments, use 'validate' in conjunction with Flyway/Liquibase.
         hbm2ddl.auto: validate
   
   # ==============================================================
@@ -57,7 +55,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.oms.domain.event" # Security: only permit deserialization for this package.
+        spring.json.trusted.packages: "com.oms.domain.event"
  
 # ==============================================================
 # OBSERVABILITY: Actuator Endpoints
