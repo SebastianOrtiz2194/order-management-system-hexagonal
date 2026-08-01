@@ -6,21 +6,54 @@
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
-		"type": "basic",
-		"basic": [
+		"type": "bearer",
+		"bearer": [
 			{
-				"key": "password",
-				"value": "admin123",
-				"type": "string"
-			},
-			{
-				"key": "username",
-				"value": "admin",
+				"key": "token",
+				"value": "{{access_token}}",
 				"type": "string"
 			}
 		]
 	},
 	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Get Access Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						},
+						"description": "Exchanges the seeded admin credentials for a signed JWT access token. Run this first — the token is automatically captured into the {{access_token}} collection variable and inherited by all other requests."
+					},
+					"response": []
+				}
+			]
+		},
 		{
 			"name": "Orders",
 			"item": [
@@ -186,6 +219,13 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
+					"// Capture the JWT from the Get Access Token response",
+					"if (pm.response.code === 200) {",
+					"    var authData = pm.response.json();",
+					"    if (authData.access_token) {",
+					"        pm.collectionVariables.set(\"access_token\", authData.access_token);",
+					"    }",
+					"}",
 					"// Example of capturing order_id from Create Order response",
 					"if (pm.response.code === 201) {",
 					"    var jsonData = pm.response.json();",
@@ -205,6 +245,11 @@
 		},
 		{
 			"key": "order_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
 			"value": "",
 			"type": "string"
 		}

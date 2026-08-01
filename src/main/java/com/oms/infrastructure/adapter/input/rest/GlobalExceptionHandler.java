@@ -4,6 +4,7 @@ import com.oms.domain.exception.InvalidOrderException;
 import com.oms.domain.exception.OrderNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
             .collect(Collectors.joining(", "));
             
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validations failed. " + validationErrors);
+    }
+
+    // Maps rejected credentials at the token endpoint to a standardized 401 response
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
