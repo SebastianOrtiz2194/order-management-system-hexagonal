@@ -91,11 +91,16 @@
     </dependency>
 
     <!-- ============================================== -->
-    <!-- SECURITY                                     -->
+    <!-- SECURITY (JWT / OAUTH2 RESOURCE SERVER)      -->
     <!-- ============================================== -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <!-- OAuth2 Resource Server: Nimbus JOSE JWT decoder (validation) and encoder (issuance) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
     </dependency>
 
     <!-- ============================================== -->
