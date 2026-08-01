@@ -43,11 +43,32 @@ mvn spring-boot:run
 
 ## Security
 
-The API is fully secured utilizing **Basic Authentication**.
-- **Username:** `admin`
-- **Password:** `admin123`
+The API is secured as an **OAuth2 Resource Server** utilizing **JWT Bearer tokens** (HMAC-SHA256). Every request to `/api/v1/**` must present a valid token via the `Authorization: Bearer` header. Authentication is fully stateless — no server-side sessions are held.
 
-When utilizing `curl`, append the flag `-u admin:admin123`. Environmental overrides are supported via standard `application.yml` parameters.
+### 1. Obtain an Access Token
+Exchange the seeded admin credentials at the public token endpoint:
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/token \
+-H "Content-Type: application/json" \
+-d '{"username": "admin", "password": "admin123"}'
+```
+**Expected Response (200 OK):**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+### 2. Authorize Requests
+Attach the token to every subsequent call:
+```bash
+TOKEN=<paste access_token here>
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/orders
+```
+
+> **Configuration (12-Factor):** The seeded admin user, signing secret, issuer, and token TTL are fully externalized. Override them via `OMS_SECURITY_USER`, `OMS_SECURITY_PASS`, `OMS_JWT_SECRET` (min. 32 bytes), `OMS_JWT_ISSUER`, and `OMS_JWT_EXPIRATION_MINUTES`. The committed defaults exist for local development only; in production, delegate token issuance to a dedicated IdP (e.g., Keycloak, Auth0) and point the resource server's decoder at its JWK endpoint.
 
 ---
 
@@ -57,7 +78,7 @@ When utilizing `curl`, append the flag `-u admin:admin123`. Environmental overri
 **Request:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/orders \
--u admin:admin123 \
+-H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{
   "customerName": "John Doe",
@@ -93,7 +114,7 @@ curl -X POST http://localhost:8080/api/v1/orders \
 Retrieves a specific order. Implements the _Cache-Aside_ pattern. It attempts to resolve from **Redis** first (which should be pre-warmed), falling back to PostgreSQL seamlessly if a cache-miss or disconnection occurs.
 **Request:**
 ```bash
-curl -u admin:admin123 http://localhost:8080/api/v1/orders/{UUID}
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/orders/{UUID}
 ```
 
 ### 3. Update Order Status
@@ -101,7 +122,7 @@ Mutates an order's lifecycle utilizing the domain's strict logical state machine
 **Request:**
 ```bash
 curl -X PATCH http://localhost:8080/api/v1/orders/{UUID}/status \
--u admin:admin123 \
+-H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{"status": "CONFIRMED"}'
 ```
@@ -126,6 +147,6 @@ A thoroughly documented Postman collection is anchored within the repository to 
 - **File Locator:** `oms_postman_collection.json`
 - **Usage:** Simply import the file directly into your Postman client.
 - **Smart Variables:** The collection leverages environment variables `{{baseUrl}}` and dynamically captures the generated UUIDs via `{{order_id}}` globally upon order creation.
-- **Inherited Authentication:** Pre-configured to automatically inject the required `Basic Auth` HTTP Headers across all REST methods.
+- **Inherited Authentication:** Run the included **Get Access Token** request first — the issued JWT is captured automatically into `{{access_token}}` and injected as a `Bearer` token across all REST methods.
 
 ---
