@@ -1,24 +1,24 @@
 -- =============================================================================
--- init.sql — Script de inicialización de la base de datos OMS
+-- init.sql — OMS Database Initialization Script
 -- =============================================================================
--- Este script se ejecuta AUTOMÁTICAMENTE por el contenedor de PostgreSQL
--- la primera vez que se crea el volumen (docker-entrypoint-initdb.d/).
+-- This script is executed AUTOMATICALLY by the PostgreSQL container
+-- the first time the volume is created (docker-entrypoint-initdb.d/).
 --
--- En proyectos con Flyway o Liquibase, este archivo solo configura extensiones
--- y roles. Las migraciones DDL se manejarán desde la app Spring Boot.
+-- In projects using Flyway or Liquibase, this file only configures extensions
+-- and roles. DDL migrations are managed from the Spring Boot app.
 -- =============================================================================
 
--- Extensión UUID: permite usar gen_random_uuid() para generar PKs tipo UUID.
--- Preferimos UUID sobre SERIAL/BIGSERIAL porque:
---   - Son globalmente únicos (no hay colisión entre microservicios)
---   - Ocultan información de negocio (no revelan volumen de pedidos)
---   - Facilitan distribución futura de datos
+-- UUID extension: enables gen_random_uuid() to generate UUID-type PKs.
+-- We prefer UUID over SERIAL/BIGSERIAL because:
+--   - They are globally unique (no collisions between microservices)
+--   - They hide business information (do not reveal order volume)
+--   - They ease future data distribution
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Extensión para full-text search (útil en búsquedas futuras de productos)
+-- Extension for full-text search (useful for future product searches)
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
--- Confirmación de inicialización
+-- Initialization confirmation
 DO $$
 BEGIN
     RAISE NOTICE 'OMS Database initialized successfully at %', NOW();
