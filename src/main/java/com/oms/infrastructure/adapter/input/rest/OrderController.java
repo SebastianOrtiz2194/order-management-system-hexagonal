@@ -3,6 +3,7 @@ package com.oms.infrastructure.adapter.input.rest;
 import com.oms.application.port.input.CreateOrderUseCase;
 import com.oms.application.port.input.GetOrderUseCase;
 import com.oms.application.port.input.UpdateOrderStatusUseCase;
+import com.oms.domain.exception.InvalidOrderException;
 import com.oms.domain.model.Order;
 import com.oms.domain.model.OrderStatus;
 import com.oms.domain.model.PagedResult;
@@ -67,7 +68,7 @@ public class OrderController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String status) {
         
-        OrderStatus statusFilter = status != null ? OrderStatus.valueOf(status.toUpperCase()) : null;
+        OrderStatus statusFilter = status != null ? parseStatus(status) : null;
         PagedResult<Order> pagedResult = getOrderUseCase.getAllOrders(page, size, statusFilter);
         
         List<OrderDTOs.OrderResponse> content = pagedResult.content().stream()
@@ -94,8 +95,21 @@ public class OrderController {
             @PathVariable UUID id, 
             @Valid @RequestBody OrderDTOs.UpdateStatusRequest request) {
         
-        OrderStatus newStatusEnum = OrderStatus.valueOf(request.status().toUpperCase());
+        OrderStatus newStatusEnum = parseStatus(request.status());
         Order updated = updateOrderStatusUseCase.updateStatus(id, newStatusEnum);
         return mapper.toResponseDto(updated);
+    }
+
+    /**
+     * Converts a raw status string into the domain enum, translating unrecognized
+     * values into a domain exception so the API returns a clean 400 response
+     * instead of leaking internal enum constant names.
+     */
+    private OrderStatus parseStatus(String rawStatus) {
+        try {
+            return OrderStatus.valueOf(rawStatus.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidOrderException("Invalid status value: " + rawStatus);
+        }
     }
 }

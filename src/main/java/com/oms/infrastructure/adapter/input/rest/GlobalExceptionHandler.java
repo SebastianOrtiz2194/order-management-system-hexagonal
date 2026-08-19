@@ -2,12 +2,15 @@ package com.oms.infrastructure.adapter.input.rest;
 
 import com.oms.domain.exception.InvalidOrderException;
 import com.oms.domain.exception.OrderNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
  * into standardized, user-friendly HTTP responses (e.g., 400 Bad Request, 404 Not Found).
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException.class)
@@ -42,6 +46,19 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validations failed. " + validationErrors);
     }
 
+    // Handles syntactically malformed request bodies (e.g., broken JSON) before DTO binding
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Malformed JSON request body");
+    }
+
+    // Handles path/query variables that cannot be converted (e.g., a non-UUID order id)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
     // Maps rejected credentials at the token endpoint to a standardized 401 response
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
@@ -53,9 +70,15 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid argument: " + ex.getMessage());
     }
 
+    /**
+     * Last-resort handler for any unexpected exception.
+     * The full stack trace is logged server-side, but only a generic message
+     * is exposed to clients to avoid leaking internal implementation details.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleAll(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.getMessage());
+        log.error("Unhandled exception occurred while processing request", ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred. Please try again later.");
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String msg) {
