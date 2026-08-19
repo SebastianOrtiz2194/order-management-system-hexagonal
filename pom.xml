@@ -19,6 +19,10 @@
     <java.version>21</java.version>
     <!-- MapStruct for converting between Clean Layers and JPA/DTOs -->
     <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+    <!-- Overrides the Spring Boot-managed Testcontainers version: 1.19.7 forces
+         Docker API 1.32, which recent Docker Desktop engines (>= 4.40) reject
+         with HTTP 400. Newer versions negotiate API 1.44 with a 1.32 fallback. -->
+    <testcontainers.version>1.21.3</testcontainers.version>
   </properties>
 
   <dependencies>
@@ -262,6 +266,33 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- Failsafe: runs *IT integration tests (Testcontainers) during the
+           integration-test and verify phases. Without this declaration the
+           ITs are silently skipped because the plugin only lives in the
+           parent's pluginManagement section. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <!-- Testcontainers defaults to Docker API 1.32 when no version is
+               detected, which recent Docker Desktop engines (>= 4.40,
+               MinAPIVersion 1.40) reject with HTTP 400. Pinning a modern
+               API version keeps the ITs working on Windows and CI alike. -->
+          <systemPropertyVariables>
+            <api.version>1.41</api.version>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
 
       <!-- Spring Boot Build plugin -->
