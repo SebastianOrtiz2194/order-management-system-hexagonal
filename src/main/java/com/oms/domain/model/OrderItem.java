@@ -1,5 +1,6 @@
 package com.oms.domain.model;
 
+import com.oms.domain.exception.InvalidOrderException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,14 +24,35 @@ public class OrderItem {
     private BigDecimal unitPrice;
 
     /**
-     * Immutable or static behavior block:
+     * Self-validation of the Value Object's invariants.
+     * The Order aggregate invokes this during {@link Order#validateAndInitialize()}
+     * so that invalid line items fail fast instead of corrupting totals.
+     *
+     * @throws InvalidOrderException if any invariant is violated.
+     */
+    public void validate() {
+        if (productId == null || productId.trim().isEmpty()) {
+            throw new InvalidOrderException("Product ID cannot be blank");
+        }
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidOrderException("Quantity must be strictly positive");
+        }
+        if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidOrderException("Unit price must be strictly positive");
+        }
+    }
+
+    /**
      * Dynamically computes the total price for this specific item (unit price * quantity).
-     * 
+     * Assumes the item was previously validated; computing a subtotal on an
+     * unvalidated item is a programming error and fails loudly instead of
+     * silently returning zero.
+     *
      * @return The calculated subtotal as a BigDecimal.
      */
     public BigDecimal calculateSubtotal() {
-        if (unitPrice == null || quantity <= 0) {
-            return BigDecimal.ZERO;
+        if (unitPrice == null || quantity == null) {
+            throw new IllegalStateException("Cannot calculate subtotal for an unvalidated item");
         }
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

@@ -45,6 +45,7 @@ public class Order {
         if (items == null || items.isEmpty()) {
             throw new InvalidOrderException("Order must have at least one item");
         }
+        items.forEach(OrderItem::validate);
 
         this.status = OrderStatus.PENDING;
         
