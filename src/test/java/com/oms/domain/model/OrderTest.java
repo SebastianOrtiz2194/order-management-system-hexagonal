@@ -63,7 +63,11 @@ class OrderTest {
         // Arrange
         Order emptyNameOrder = Order.builder()
                 .customerName("  ")
-                .items(List.of(OrderItem.builder().build())) // Dummy item
+                .items(List.of(OrderItem.builder()
+                        .productId("sku-1")
+                        .quantity(1)
+                        .unitPrice(BigDecimal.TEN)
+                        .build()))
                 .build();
 
         // Act & Assert
@@ -75,7 +79,11 @@ class OrderTest {
         // Arrange
         Order order = Order.builder()
                 .customerName("Jane")
-                .items(List.of(OrderItem.builder().quantity(1).unitPrice(BigDecimal.TEN).build()))
+                .items(List.of(OrderItem.builder()
+                        .productId("sku-1")
+                        .quantity(1)
+                        .unitPrice(BigDecimal.TEN)
+                        .build()))
                 .build();
         
         order.validateAndInitialize();
@@ -99,5 +107,79 @@ class OrderTest {
         
         // Act & Assert: Invalid DELIVERED -> CANCELLED transition (terminal state check)
         assertThrows(InvalidOrderException.class, () -> order.updateStatus(OrderStatus.CANCELLED));
+    }
+
+    // ─── Item validation (fail fast) ─────────────────────────────────────────────
+
+    private Order orderWithItem(OrderItem item) {
+        return Order.builder()
+                .customerName("Valid Customer")
+                .items(List.of(item))
+                .build();
+    }
+
+    @Test
+    void shouldRejectItemWithNullQuantity() {
+        OrderItem item = OrderItem.builder()
+                .productId("sku-1")
+                .quantity(null)
+                .unitPrice(BigDecimal.TEN)
+                .build();
+
+        Exception ex = assertThrows(InvalidOrderException.class,
+                () -> orderWithItem(item).validateAndInitialize());
+        assertEquals("Quantity must be strictly positive", ex.getMessage());
+    }
+
+    @Test
+    void shouldRejectItemWithZeroOrNegativeQuantity() {
+        assertThrows(InvalidOrderException.class, () -> orderWithItem(
+                OrderItem.builder().productId("sku-1").quantity(0).unitPrice(BigDecimal.TEN).build())
+                .validateAndInitialize());
+        assertThrows(InvalidOrderException.class, () -> orderWithItem(
+                OrderItem.builder().productId("sku-1").quantity(-3).unitPrice(BigDecimal.TEN).build())
+                .validateAndInitialize());
+    }
+
+    @Test
+    void shouldRejectItemWithNullUnitPrice() {
+        OrderItem item = OrderItem.builder()
+                .productId("sku-1")
+                .quantity(2)
+                .unitPrice(null)
+                .build();
+
+        Exception ex = assertThrows(InvalidOrderException.class,
+                () -> orderWithItem(item).validateAndInitialize());
+        assertEquals("Unit price must be strictly positive", ex.getMessage());
+    }
+
+    @Test
+    void shouldRejectItemWithZeroOrNegativeUnitPrice() {
+        assertThrows(InvalidOrderException.class, () -> orderWithItem(
+                OrderItem.builder().productId("sku-1").quantity(2).unitPrice(BigDecimal.ZERO).build())
+                .validateAndInitialize());
+        assertThrows(InvalidOrderException.class, () -> orderWithItem(
+                OrderItem.builder().productId("sku-1").quantity(2).unitPrice(new BigDecimal("-5.00")).build())
+                .validateAndInitialize());
+    }
+
+    @Test
+    void shouldRejectItemWithBlankProductId() {
+        OrderItem item = OrderItem.builder()
+                .productId("   ")
+                .quantity(1)
+                .unitPrice(BigDecimal.TEN)
+                .build();
+
+        Exception ex = assertThrows(InvalidOrderException.class,
+                () -> orderWithItem(item).validateAndInitialize());
+        assertEquals("Product ID cannot be blank", ex.getMessage());
+    }
+
+    @Test
+    void shouldFailLoudlyWhenComputingSubtotalOnUnvalidatedItem() {
+        assertThrows(IllegalStateException.class,
+                () -> OrderItem.builder().build().calculateSubtotal());
     }
 }
