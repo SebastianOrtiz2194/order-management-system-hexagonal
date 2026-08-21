@@ -12,8 +12,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Order Management", description = "Endpoints for creating, retrieving, and updating orders")
 public class OrderController {
 
@@ -64,8 +68,9 @@ public class OrderController {
     @Operation(summary = "Get all orders", description = "Retrieves all current orders in the system with pagination and optional filtering.")
     @ApiResponse(responseCode = "200", description = "Orders returned successfully")
     public OrderDTOs.PagedResponse<OrderDTOs.OrderResponse> getAllOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "Page must be zero or greater") int page,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "Size must be at least 1")
+            @Max(value = 100, message = "Size cannot exceed 100") int size,
             @RequestParam(required = false) String status) {
         
         OrderStatus statusFilter = status != null ? parseStatus(status) : null;

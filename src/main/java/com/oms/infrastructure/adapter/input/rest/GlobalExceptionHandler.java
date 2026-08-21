@@ -2,14 +2,16 @@ package com.oms.infrastructure.adapter.input.rest;
 
 import com.oms.domain.exception.InvalidOrderException;
 import com.oms.domain.exception.OrderNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
@@ -59,6 +61,27 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
     }
 
+    // Handles constraint violations on controller method parameters (e.g., @Min/@Max on pagination)
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodValidation(HandlerMethodValidationException ex) {
+        String validationErrors = ex.getAllValidationResults().stream()
+            .flatMap(result -> result.getResolvableErrors().stream())
+            .map(this::resolveMessage)
+            .collect(Collectors.joining(", "));
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validations failed. " + validationErrors);
+    }
+
+    // Handles jakarta.validation constraint violations raised outside controller binding
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        String validationErrors = ex.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+            .collect(Collectors.joining(", "));
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validations failed. " + validationErrors);
+    }
+
     // Maps rejected credentials at the token endpoint to a standardized 401 response
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
@@ -88,5 +111,15 @@ public class GlobalExceptionHandler {
                 "error", status.getReasonPhrase(),
                 "message", msg
         ));
+    }
+
+    /** Resolves a resolvable validation error, falling back to its codes if no default message exists. */
+    private String resolveMessage(org.springframework.context.MessageSourceResolvable error) {
+        String defaultMessage = error.getDefaultMessage();
+        if (defaultMessage != null && !defaultMessage.isBlank()) {
+            return defaultMessage;
+        }
+        String[] codes = error.getCodes();
+        return codes != null && codes.length > 0 ? codes[codes.length - 1] : "Invalid value";
     }
 }

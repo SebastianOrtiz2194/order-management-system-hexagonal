@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,7 +69,8 @@ public class PostgresOrderAdapter implements OrderRepositoryPort {
      */
     @Override
     public PagedResult<Order> findAll(int page, int size, OrderStatus status) {
-        Pageable pageable = PageRequest.of(page, size);
+        // Deterministic ordering: newest orders first, regardless of status filter.
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<OrderJpaEntity> entityPage;
         
         if (status != null) {
