@@ -182,6 +182,60 @@ class OrderControllerIT {
                 .andExpect(jsonPath("$.currentPage").isNumber());
     }
 
+    @Test
+    @DisplayName("GET /orders - 400 Bad Request when size is below 1")
+    void getAllOrders_withZeroSize_returns400() throws Exception {
+        mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("GET /orders - 400 Bad Request when size exceeds 100")
+    void getAllOrders_withSizeAbove100_returns400() throws Exception {
+        mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "101"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /orders - 400 Bad Request when page is negative")
+    void getAllOrders_withNegativePage_returns400() throws Exception {
+        mockMvc.perform(get(BASE_URL).param("page", "-1").param("size", "20"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /orders - results are sorted by createdAt descending")
+    void getAllOrders_returnsNewestFirst() throws Exception {
+        // Given: Two orders created in sequence (the second one is newer).
+        String firstJson = objectMapper.writeValueAsString(buildValidCreateRequest());
+        MvcResult firstCreate = mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(firstJson))
+                .andExpect(status().isCreated())
+                .andReturn();
+        OrderDTOs.OrderResponse first = objectMapper.readValue(
+                firstCreate.getResponse().getContentAsString(), OrderDTOs.OrderResponse.class);
+
+        // Small pause guarantees a strictly newer timestamp for the second order.
+        Thread.sleep(10);
+
+        String secondJson = objectMapper.writeValueAsString(buildValidCreateRequest());
+        MvcResult secondCreate = mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(secondJson))
+                .andExpect(status().isCreated())
+                .andReturn();
+        OrderDTOs.OrderResponse second = objectMapper.readValue(
+                secondCreate.getResponse().getContentAsString(), OrderDTOs.OrderResponse.class);
+
+        // When / Then: The two newest orders appear first, newest at the top.
+        mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(second.id()))
+                .andExpect(jsonPath("$.content[1].id").value(first.id()));
+    }
+
     // ─── PATCH /api/v1/orders/{id}/status ────────────────────────────────────────
 
     @Test
